@@ -7,7 +7,9 @@ from datetime import datetime
 import json
 import time
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 
+load_dotenv()
 # Get the project root directory (parent of 'api' folder)
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_folder = os.path.join(project_root, 'static')
