@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Checklist - Daily Tracking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CS Checklist - Daily Tracking</h1>
+            <div class="header-controls">
+                <div class="date-selector">
+                    <label for="date-input">Date:</label>
+                    <input type="date" id="date-input" value="">
+                </div>
+                <div class="user-selector">
+                    <label for="user-input">Your Name:</label>
+                    <input type="text" id="user-input" placeholder="Enter your name" value="">
+                </div>
+            </div>
+            <div class="filter-controls">
+                <div class="filter">
+                    <label for="filter-process">Process</label>
+                    <select id="filter-process">
+                        <option value="all">All processes</option>
+                    </select>
+                </div>
+                <div class="filter">
+                    <label for="filter-equipment">Equipment</label>
+                    <select id="filter-equipment">
+                        <option value="all">All equipment</option>
+                    </select>
+                </div>
+                <div class="filter">
+                    <label for="filter-period">Frequency</label>
+                    <select id="filter-period">
+                        <option value="all">All frequencies</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading checklist...</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;">
+            <p id="error-message"></p>
+        </div>
+
+        <div class="checklist-container" id="checklist-container" style="display: none;">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Items:</span>
+                    <span class="stat-value" id="total-items">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Checked:</span>
+                    <span class="stat-value" id="checked-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Progress:</span>
+                    <span class="stat-value" id="progress">0%</span>
+                </div>
+            </div>
+
+            <div class="checklist" id="checklist">
+                <!-- Checklist items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+

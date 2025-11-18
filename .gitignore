@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.env
+firebase-credentials.json
+.DS_Store
+.vercel
+.csv
+.xlsx
+

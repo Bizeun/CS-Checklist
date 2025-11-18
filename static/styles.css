@@ -1,0 +1,387 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.header-controls {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.filter-controls {
+    margin-top: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.filter {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+    color: #fff;
+}
+
+.filter label {
+    font-weight: 500;
+}
+
+.filter select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 0.95em;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+}
+
+.filter select option {
+    color: #333;
+}
+
+.date-selector,
+.user-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-selector label,
+.user-selector label {
+    font-weight: 500;
+    font-size: 1.1em;
+}
+
+#date-input,
+#user-input {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+#date-input::placeholder,
+#user-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#user-input {
+    min-width: 200px;
+}
+
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.spinner {
+    border: 4px solid rgba(102, 126, 234, 0.1);
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error {
+    background: #fee;
+    color: #c33;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #c33;
+}
+
+.stats {
+    display: flex;
+    gap: 20px;
+    padding: 30px;
+    background: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stat-item {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    min-width: 150px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.checklist-container {
+    padding: 30px;
+}
+
+.checklist {
+    display: grid;
+    gap: 15px;
+}
+
+.checklist-item {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.checklist-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+.checklist-item.checked {
+    background: #f0f7ff;
+    border-color: #667eea;
+}
+
+.checkbox {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #667eea;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.checklist-item.checked .checkbox {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.checkbox::after {
+    content: '✓';
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.checklist-item.checked .checkbox::after {
+    opacity: 1;
+}
+
+.item-content {
+    flex: 1;
+}
+
+.item-text {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.item-category {
+    font-size: 0.85em;
+    color: #666;
+    background: #f8f9fa;
+    padding: 4px 10px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.item-meta {
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #999;
+}
+
+.item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.tag {
+    font-size: 0.8em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+    background: #f1f3f5;
+    color: #495057;
+}
+
+.tag-process {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.tag-equipment {
+    background: #fce4ec;
+    color: #c2185b;
+}
+
+.tag-period {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.checked-by {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-right: 8px;
+    margin-top: 5px;
+}
+
+.item-actions {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.photo-upload-btn {
+    background: #667eea;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.photo-upload-btn:hover {
+    background: #5a6fd6;
+    transform: translateY(-1px);
+}
+
+.photo-gallery {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.photo-thumb {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 120px;
+    text-decoration: none;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.photo-thumb img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    display: block;
+}
+
+.photo-meta {
+    font-size: 0.8em;
+    color: #555;
+    padding: 6px 8px;
+    background: #f9fafb;
+}
+
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8em;
+    }
+
+    .header-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #date-input,
+    #user-input {
+        width: 100%;
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+
+    .stat-item {
+        width: 100%;
+    }
+}
+
+
