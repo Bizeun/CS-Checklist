@@ -284,6 +284,6 @@ async def serve_static(filename: str):
 
 
 # __all__ = ['handler', 'app']
-from mangum import Mangum
+# from mangum import Mangum
 
-handler = Mangum(app)
+# handler = Mangum(app)
