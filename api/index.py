@@ -77,6 +77,18 @@ def ensure_firebase():
     if db is None:
         init_firebase()
 
+def fetch_master_item_count():
+    """Fetches the total number of items in the master checklist."""
+    try:
+        # Assuming the master checklist items are stored here, same place as /checklist/items reads from
+        doc_ref = db.collection('metadata').document('checklist_items')
+        doc = doc_ref.get()
+        if doc.exists and 'items' in doc.to_dict():
+            return len(doc.to_dict()['items'])
+        return 0
+    except Exception:
+        # Fallback in case of DB error
+        return 0
 
 @app.get('/api/health')
 async def health():
@@ -257,10 +269,13 @@ async def get_last_completions():
 async def get_calendar_summary(start_date: str, end_date: str):
     """
     Retrieves summary data (who submitted, how many checked) for all dates 
-    between start_date and end_date (YYYY-MM-DD).
+    between start_date and end_date (YYYY-MM-DD), and the total master item count.
     """
     try:
         ensure_firebase()
+        
+        # Get the total number of tasks to use as the denominator in the summary
+        total_master_items = fetch_master_item_count()
         
         # Convert string dates to datetime objects for comparison
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
@@ -275,6 +290,7 @@ async def get_calendar_summary(start_date: str, end_date: str):
             doc_ref = db.collection('checklists').document(date_str)
             doc = doc_ref.get()
             
+            # ... (rest of the day_summary calculation logic remains the same)
             day_summary = {
                 'submitted': False,
                 'total_checked': 0,
@@ -307,9 +323,11 @@ async def get_calendar_summary(start_date: str, end_date: str):
             # Move to the next day
             current_dt += timedelta(days=1)
 
-        return JSONResponse(summary_data)
+        # Return the summary data and the total item count
+        return JSONResponse({'summaryData': summary_data, 'totalMasterItems': total_master_items})
         
     except Exception as e:
+        # ... (rest of the error handling)
         print(f"Error fetching calendar summary: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 

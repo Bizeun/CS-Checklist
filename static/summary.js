@@ -10,6 +10,7 @@ const nextButton = document.getElementById('next-month');
 
 // State
 let currentViewDate = new Date(); // Tracks the month currently being viewed
+let totalMasterItems = 0; // NEW: Global variable to store total item count
 
 // --- Utility Functions ---
 
@@ -48,7 +49,6 @@ function getStartAndEndDate(dateInMonth) {
 }
 
 // --- Fetching Data ---
-
 async function fetchSummaryData(date) {
     const { startDate, endDate } = getStartAndEndDate(date);
     
@@ -59,7 +59,9 @@ async function fetchSummaryData(date) {
              throw new Error(`API error: ${response.statusText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        // Returns {summaryData: {...}, totalMasterItems: N}
+        return data; 
     } catch (error) {
         console.error('Error fetching calendar summary:', error);
         calendarGrid.innerHTML = `<p style="text-align: center; color: red;">Failed to load data: ${error.message}</p>`;
@@ -78,8 +80,9 @@ function renderHeader() {
 /**
  * Renders the calendar grid and populates cells with summary data.
  * @param {Object} summaryData - Data keyed by date string (YYYY-MM-DD).
+ * @param {number} totalItemsCount - The total number of master checklist items.
  */
-function renderCalendar(summaryData) {
+function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
     calendarGrid.innerHTML = '';
     calendarGrid.className = 'calendar-grid';
 
@@ -91,7 +94,7 @@ function renderCalendar(summaryData) {
 
     // 1. Determine the first day of the month and the day of the week
     const firstDayOfMonth = new Date(year, month, 1);
-    const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 for Sunday, 6 for Saturday
+    const startingDayOfWeek = firstDayOfMonth.getDay(); 
 
     // 2. Determine the last day of the month
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
@@ -113,9 +116,10 @@ function renderCalendar(summaryData) {
         if (dayData) {
             dayClass += ' has-data';
             
-            // Generate user summary list
+            // Generate user summary list (UPDATED LIST ITEM)
             const userSummaries = Object.entries(dayData.users)
-                .map(([user, count]) => `<li>${user}: ${count} checked</li>`)
+                // SHOWS COUNT / TOTAL ITEMS
+                .map(([user, count]) => `<li>${user}: ${count} / ${totalItemsCount} checked</li>`)
                 .join('');
                 
             if (dayData.submitted) {
@@ -142,8 +146,12 @@ async function initCalendar() {
 }
 
 async function loadCalendarForMonth(date) {
-    const summaryData = await fetchSummaryData(date);
-    renderCalendar(summaryData);
+    const responseData = await fetchSummaryData(date);
+    // NEW: Extract data from the response structure
+    const summaryData = responseData.summaryData || {};
+    totalMasterItems = responseData.totalMasterItems || 0; // Update global state
+    
+    renderCalendar(summaryData, totalMasterItems); // UPDATED CALL
 }
 
 // Event handlers for navigation
