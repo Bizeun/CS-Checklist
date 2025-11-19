@@ -460,6 +460,13 @@ header h1 {
 }
 
 /* --- Button Styles for .submit-btn (Used for Submit and View Summary) --- */
+.buttons {
+    display: flex;
+    justify-content: center; /* Horizontally centers the items */
+    gap: 20px;              /* Adds space between the Submit and Summary buttons */
+    margin-top: 20px;       /* Optional: Adds vertical space above the buttons */
+    padding: 0 30px 30px;   /* Optional: Adds space at the bottom of the container */
+}
 
 /* Base style for the button and the link that shares its class */
 .submit-btn button,
