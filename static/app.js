@@ -188,8 +188,6 @@ async function submitChecklist() {
     }
 }
 
-// Photo upload feature removed. Photo-related functions and UI were deleted.
-
 // Render checklist
 function renderChecklist() {
     if (checklistItems.length === 0) {
@@ -224,30 +222,34 @@ function renderChecklist() {
         const periodValue = item.periodDays != null ? String(item.periodDays) : 'custom';
         const periodMatches = filterPeriod === 'all' || periodValue === filterPeriod;
         
-        // --- FIX 1: Allow past dates to show all periodic items ---
-        if (currentDate < actualToday) {
+        // Check if the item is already checked for the current date (by anyone)
+        const isAlreadyCheckedToday = checkedItems[item.id];
+        
+        // Rule 1 & 2: If checked OR viewing a past date, always show the item
+        if (isAlreadyCheckedToday || currentDate < actualToday) {
             return processMatches && equipmentMatches && periodMatches;
         }
-        // --- END FIX 1 ---
         
-        // Period-based auto-filtering: show task if enough days have passed since last completion
+        // Rule 3: If unchecked AND viewing today/future, apply periodic filter
+        
         const periodDays = item.periodDays;
         if (periodDays != null && periodDays > 0) {
             const lastCompletionDate = lastCompletions[item.id];
+            
             if (lastCompletionDate) {
                 // Calculate days since last completion
                 const lastDate = new Date(lastCompletionDate + 'T00:00:00');
                 const today = new Date(currentDate + 'T00:00:00');
                 const daysSince = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
                 
-                // Show task only if days since last completion >= period days
+                // Hide task if NOT enough days have passed
                 if (daysSince < periodDays) {
-                    return false; // Hide task - not enough days have passed
+                    return false; 
                 }
             }
-            // If never completed, show it (needs to be done)
         }
         
+        // If it passed all checks (manual filters and periodic requirement or never done), show it.
         return processMatches && equipmentMatches && periodMatches;
     });
     
@@ -258,7 +260,7 @@ function renderChecklist() {
     }
 
     checklistDiv.innerHTML = filteredItems.map(item => {
-        // --- FIX 2: Check if ANY user completed the task for visual checkmark ---
+        // Check if ANY user completed the task for visual checkmark
         const isChecked = checkedItems[item.id]; 
         
         const checkedBy = checkedItems[item.id] ? Object.keys(checkedItems[item.id]) : [];
@@ -296,11 +298,10 @@ function renderChecklist() {
 // Update statistics
 function updateStats(visibleItems) {
     const total = visibleItems.length;
-    // --- FIX 3: Update stats to reflect checks by ANY user ---
+    // Update stats to reflect checks by ANY user
     const checked = visibleItems.filter(item =>
         checkedItems[item.id] // Check if the item ID exists in checkedItems (meaning any user checked it)
     ).length;
-    // --- END FIX 3 ---
 
     const progress = total > 0 ? Math.round((checked / total) * 100) : 0;
     
@@ -310,7 +311,6 @@ function updateStats(visibleItems) {
 }
 
 // Utility functions
-// ... (all other utility functions like showLoading, hideLoading, formatPeriodLabel, etc., remain the same)
 function showLoading() {
     loadingDiv.style.display = 'block';
     checklistContainer.style.display = 'none';
@@ -396,7 +396,6 @@ function fillSelect(selectElement, values, defaultLabel, formatter) {
         selectElement.value = 'all';
     }
 }
-
 
 // Make toggleCheck available globally
 window.toggleCheck = toggleCheck;
