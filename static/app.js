@@ -12,7 +12,6 @@ let currentDate = getTodayDate();
 let currentUser = localStorage.getItem('checklist_user') || '';
 let checklistItems = [];
 let checkedItems = {};
-let checklistPhotos = {};
 let lastCompletions = {}; // {item_id: 'YYYY-MM-DD'}
 let filterProcess = 'all';
 let filterEquipment = 'all';
@@ -108,7 +107,6 @@ async function loadChecklist() {
         
         const checklistData = await checklistResponse.json();
         checkedItems = checklistData.checked ? checklistData.checked : {};
-        checklistPhotos = checklistData.photos ? checklistData.photos : {};
         
         renderChecklist();
         hideLoading();
@@ -162,8 +160,7 @@ async function submitChecklist() {
     const payload = {
         date: currentDate,
         items: checklistItems,
-        checked: checkedItems,
-        photos: checklistPhotos
+        checked: checkedItems
     };
 
     try {
@@ -192,67 +189,7 @@ async function submitChecklist() {
     }
 }
 
-function triggerPhotoUpload(itemId) {
-    if (!currentUser) {
-        alert('Please enter your name first!');
-        userInput.focus();
-        return;
-    }
-
-    const input = document.getElementById(`photo-input-${itemId}`);
-    if (input) {
-        input.value = '';
-        input.click();
-    }
-}
-
-async function handlePhotoSelected(event, itemId) {
-    const file = event.target.files[0];
-    if (!file) {
-        return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-        alert('Please upload an image smaller than 10MB.');
-        event.target.value = '';
-        return;
-    }
-
-    await uploadPhoto(itemId, file);
-    event.target.value = '';
-}
-
-async function uploadPhoto(itemId, file) {
-    if (!currentUser) {
-        alert('Please enter your name first!');
-        userInput.focus();
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('photo', file);
-    formData.append('date', currentDate);
-    formData.append('item_id', itemId);
-    formData.append('user', currentUser);
-
-    try {
-        const response = await fetch(`${API_BASE}/checklist/photo`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            checklistPhotos = data.photos || checklistPhotos;
-            renderChecklist();
-        } else {
-            throw new Error(data.error || 'Upload failed');
-        }
-    } catch (error) {
-        console.error('Error uploading photo:', error);
-        alert('Failed to upload photo: ' + error.message);
-    }
-}
+// Photo upload feature removed. Photo-related functions and UI were deleted.
 
 // Render checklist
 function renderChecklist() {
@@ -315,7 +252,6 @@ function renderChecklist() {
     checklistDiv.innerHTML = filteredItems.map(item => {
         const isChecked = checkedItems[item.id] && checkedItems[item.id][currentUser];
         const checkedBy = checkedItems[item.id] ? Object.keys(checkedItems[item.id]) : [];
-        const itemPhotos = checklistPhotos[item.id] ? Object.entries(checklistPhotos[item.id]) : [];
         const processLabel = item.process || item.category || 'General';
         const equipmentLabel = item.equipment || 'N/A';
         const taskLabel = item.item || item.text || 'Task';
@@ -338,24 +274,8 @@ function renderChecklist() {
                         </div>
                     ` : ''}
                     <div class="item-actions" onclick="event.stopPropagation();">
-                        <button type="button" class="photo-upload-btn" onclick="triggerPhotoUpload('${item.id}')">
-                            Upload Photo
-                        </button>
-                        <input type="file" id="photo-input-${item.id}" accept="image/*" style="display:none" onchange="handlePhotoSelected(event, '${item.id}')">
+                        <!-- Photo upload removed -->
                     </div>
-                    ${itemPhotos.length > 0 ? `
-                        <div class="photo-gallery">
-                            ${itemPhotos.map(([u, photo]) => {
-                                const safeUrl = photo && photo.url ? encodeURI(photo.url) : '';
-                                return safeUrl ? `
-                                    <a href="${safeUrl}" target="_blank" rel="noopener" class="photo-thumb">
-                                        <img src="${safeUrl}" alt="Photo for ${escapeHtml(taskLabel)}">
-                                        <span class="photo-meta">${escapeHtml(u)}</span>
-                                    </a>
-                                ` : '';
-                            }).join('')}
-                        </div>
-                    ` : ''}
                 </div>
             </div>
         `;
@@ -466,8 +386,6 @@ function fillSelect(selectElement, values, defaultLabel, formatter) {
 
 // Make toggleCheck available globally
 window.toggleCheck = toggleCheck;
-window.triggerPhotoUpload = triggerPhotoUpload;
-window.handlePhotoSelected = handlePhotoSelected;
 
 // Wire submit button
 document.addEventListener('DOMContentLoaded', () => {

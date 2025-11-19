@@ -40,12 +40,10 @@ if os.path.isdir(static_folder):
 
 # Initialize Firebase references
 db = None
-bucket = None
-
 
 def init_firebase():
     """Initialize Firebase services if needed."""
-    global db, bucket
+    global db
     if not firebase_admin._apps:
         cred_path = os.environ.get('FIREBASE_CREDENTIALS')
         if cred_path:
@@ -57,17 +55,10 @@ def init_firebase():
                 cred = credentials.Certificate(cred_path)
             else:
                 raise Exception("Firebase credentials not found. Set FIREBASE_CREDENTIALS or FIREBASE_CREDENTIALS_PATH")
-
-        firebase_config = {}
-        bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET')
-        if bucket_name:
-            firebase_config['storageBucket'] = bucket_name
-        firebase_admin.initialize_app(cred, firebase_config or None)
+        # Initialize the Firebase app using the constructed credentials
+        firebase_admin.initialize_app(cred)
 
     db = firestore.client()
-    bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET')
-    bucket = storage.bucket(bucket_name) if bucket_name else None
-
 
 # Attempt to initialize on import (will warn if missing config)
 try:
@@ -89,8 +80,8 @@ def make_json_serializable(data):
 
 def ensure_firebase():
     """Ensure Firebase services are ready before handling a request."""
-    global db, bucket
-    if db is None or bucket is None:
+    global db
+    if db is None:
         init_firebase()
 
 
@@ -118,8 +109,7 @@ async def get_checklist(date: str | None = None):
             return JSONResponse({
                 'date': date,
                 'items': [],
-                'checked': {},
-                'photos': {}
+                'checked': {}
             })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -131,7 +121,6 @@ async def update_checklist(payload: dict):
     date = payload.get('date', datetime.now().strftime('%Y-%m-%d'))
     items = payload.get('items', [])
     checked = payload.get('checked', {})
-    photos = payload.get('photos', {})
 
     try:
         ensure_firebase()
@@ -141,7 +130,6 @@ async def update_checklist(payload: dict):
             'date': date,
             'items': items,
             'checked': checked,
-            'photos': photos,
             'lastUpdated': firestore.SERVER_TIMESTAMP
         }, merge=True)
         return JSONResponse({"success": True})
@@ -168,13 +156,11 @@ async def toggle_check(data: dict):
         if doc.exists:
             checklist_data = doc.to_dict()
             checked = checklist_data.get('checked', {})
-            checklist_data.setdefault('photos', {})
         else:
             checklist_data = {
                 'date': date,
                 'items': [],
-                'checked': {},
-                'photos': {}
+                'checked': {}
             }
             checked = {}
 
@@ -271,60 +257,6 @@ async def get_last_completions():
                             last_completions[item_id] = doc_date
 
         return JSONResponse({"lastCompletions": last_completions})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-@app.post('/api/checklist/photo')
-async def upload_photo(date: str = Form(...), item_id: str = Form(...), user: str = Form('anonymous'), photo: UploadFile = File(...)):
-    """Upload a verification photo for a checklist item."""
-    if not date or not item_id or not user:
-        raise HTTPException(status_code=400, detail='Missing required fields')
-
-    if not photo.filename:
-        raise HTTPException(status_code=400, detail='Empty filename')
-
-    if not photo.content_type or not photo.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail='Only image uploads are allowed')
-
-    try:
-        ensure_firebase()
-        if bucket is None:
-            return JSONResponse({"error": "Photo uploads require FIREBASE_STORAGE_BUCKET to be configured"}, status_code=500)
-
-        safe_name = secure_filename(photo.filename)
-        timestamp = int(time.time())
-        blob_path = f"checklists/{date}/{item_id}/{timestamp}_{safe_name}"
-
-        blob = bucket.blob(blob_path)
-        # Upload from the UploadFile's file-like object
-        blob.upload_from_file(photo.file, content_type=photo.content_type)
-        blob.make_public()
-
-        photo_entry = {
-            'url': blob.public_url,
-            'path': blob_path,
-            'uploadedBy': user,
-            'uploadedAt': firestore.SERVER_TIMESTAMP
-        }
-
-        doc_ref = db.collection('checklists').document(date)
-        doc_ref.set({
-            'photos': {
-                item_id: {
-                    user: photo_entry
-                }
-            },
-            'lastUpdated': firestore.SERVER_TIMESTAMP
-        }, merge=True)
-
-        updated_doc = doc_ref.get()
-        photos = {}
-        if updated_doc.exists:
-            doc_data = updated_doc.to_dict()
-            photos = make_json_serializable(doc_data.get('photos', {}))
-
-        return JSONResponse({"success": True, "photos": photos})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
