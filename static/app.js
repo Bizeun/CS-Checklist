@@ -121,38 +121,74 @@ async function loadChecklist() {
 
 // Toggle check for an item
 async function toggleCheck(itemId) {
+    // Local-only toggle: mark/unmark checkedItems locally and wait for explicit submit
     if (!currentUser) {
         alert('Please enter your name first!');
         userInput.focus();
         return;
     }
-    
+
+    // Ensure structure exists
+    if (!checkedItems[itemId]) {
+        checkedItems[itemId] = {};
+    }
+
+    if (checkedItems[itemId][currentUser]) {
+        // Uncheck locally
+        delete checkedItems[itemId][currentUser];
+        if (Object.keys(checkedItems[itemId]).length === 0) {
+            delete checkedItems[itemId];
+        }
+    } else {
+        // Check locally with an ISO timestamp (server will replace with its timestamp on submit)
+        checkedItems[itemId][currentUser] = {
+            timestamp: new Date().toISOString(),
+            checked: true
+        };
+    }
+
+    // Do NOT update lastCompletions here; only update on submit when data is persisted
+    renderChecklist();
+}
+
+// Submit the entire checklist (persist checked items and photos) for the current date
+async function submitChecklist() {
+    if (!currentUser) {
+        alert('Please enter your name first!');
+        userInput.focus();
+        return;
+    }
+
+    const payload = {
+        date: currentDate,
+        items: checklistItems,
+        checked: checkedItems,
+        photos: checklistPhotos
+    };
+
     try {
-        const response = await fetch(`${API_BASE}/checklist/toggle`, {
+        showLoading();
+        const response = await fetch(`${API_BASE}/checklist`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                date: currentDate,
-                item_id: itemId,
-                user: currentUser
-            })
+            body: JSON.stringify(payload)
         });
-        
+
         const data = await response.json();
-        
         if (data.success) {
-            checkedItems = data.checked;
-            // Update last completion date for this item
-            lastCompletions[itemId] = currentDate;
-            renderChecklist();
+            // After successful submit, reload from server to refresh last-completions
+            await loadChecklist();
+            alert('Checklist submitted successfully.');
         } else {
-            throw new Error(data.error || 'Failed to update');
+            throw new Error(data.error || 'Submit failed');
         }
     } catch (error) {
-        console.error('Error toggling check:', error);
-        alert('Failed to update checklist: ' + error.message);
+        console.error('Error submitting checklist:', error);
+        showError('Failed to submit checklist: ' + error.message);
+    } finally {
+        hideLoading();
     }
 }
 
@@ -432,6 +468,17 @@ function fillSelect(selectElement, values, defaultLabel, formatter) {
 window.toggleCheck = toggleCheck;
 window.triggerPhotoUpload = triggerPhotoUpload;
 window.handlePhotoSelected = handlePhotoSelected;
+
+// Wire submit button
+document.addEventListener('DOMContentLoaded', () => {
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            submitChecklist();
+        });
+    }
+});
 
 // Load checklist on page load
 loadChecklist();
