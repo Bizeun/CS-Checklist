@@ -409,6 +409,14 @@ document.addEventListener('DOMContentLoaded', () => {
             submitChecklist();
         });
     }
+
+    const summaryNavBtn = document.getElementById('summary-btn');
+    if (summaryNavBtn) {
+        summaryNavBtn.addEventListener('click', () => {
+            // Redirect the user to the summary page
+            window.location.href = 'summary.html';
+        });
+    }
 });
 
 // Load checklist on page load
