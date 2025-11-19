@@ -6,19 +6,19 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "^/api/(.*)$",
       "dest": "/api/index.py"
     },
     {
-      "src": "/static/(.*)",
+      "src": "^/static/(.*)$",
       "dest": "/static/$1"
     },
     {
-      "src": "/",
+      "src": "^/$",
       "dest": "/static/index.html"
     },
     {
-      "src": "/(.*)",
+      "src": "^(?!/api)(.*)$",
       "dest": "/static/$1"
     }
   ]
