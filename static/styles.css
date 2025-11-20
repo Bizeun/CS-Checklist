@@ -443,9 +443,20 @@ header h1 {
     background-color: #ebf5ff;
 }
 
+.calendar-day.has-data:not(.submitted) {
+    /* ONGOING (Yellow) */
+    background-color: #ffffe0; /* Light Yellow/Ivory */
+    border-color: #ff9900;
+}
+
 .calendar-day.submitted {
     background-color: #e6ffe6;
     border-color: #0a0;
+}
+
+.calendar-day.is-incomplete {
+    background-color: #ffe6e6 !important; /* Light Red/Pink */
+    border-color: #cc0000 !important;
 }
 
 #calendar-controls {
