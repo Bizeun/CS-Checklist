@@ -524,11 +524,13 @@ header h1 {
 /* --- Calendar Controls Button Enhancement --- */
 
 #calendar-controls button {
-    /* Inherits basic button style from before, but let's make it look cleaner */
-    background: #667eea; /* Primary color */
-    color: white;
-    border: none;
-    border-radius: 50%; /* Makes them circular */
+    /* NEW WHITE STYLING */
+    background: white; 
+    color: #667eea; /* Use the primary theme color for the arrows/text */
+    border: 2px solid #667eea; /* Add border for definition */
+    
+    /* Existing Styles (ensure these are present for shape/functionality) */
+    border-radius: 50%; 
     width: 40px;
     height: 40px;
     line-height: 40px;
@@ -536,10 +538,12 @@ header h1 {
     font-size: 1.2em;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #calendar-controls button:hover {
-    background: #5a6fd6;
+    background: #f0f7ff; /* Very light blue background on hover */
+    color: #5a6fd6;
+    border-color: #5a6fd6;
 }
