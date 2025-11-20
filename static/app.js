@@ -338,9 +338,7 @@ function renderChecklist() {
                 // --- MODIFIED: REMOVED ${data.note ? ... } FROM HERE ---
                 return `
                     <span class="checked-by">
-                        ${escapeHtml(user)} 
-                        Time: 
-                        <span class="checked-by-time">${timeStr}</span>
+                        ${escapeHtml(user)} ${timeStr}
                     </span>
                 `;
             }).join(', '); // Join multiple checkers with a comma and space
