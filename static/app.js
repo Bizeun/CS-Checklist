@@ -340,9 +340,7 @@ function renderChecklist() {
                 // Construct the span with the user name, time, and note (if present)
                 return `
                     <span class="checked-by">
-                        ${escapeHtml(user)} 
-                        Time: 
-                        <span class="checked-by-time">${timeStr}</span>
+                        ${escapeHtml(user)} ${timeStr}
                         ${data.note ? ` (<span class="checked-note">${escapeHtml(data.note)}</span>)` : ''}
                     </span>
                 `;
