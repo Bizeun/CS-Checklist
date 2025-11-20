@@ -547,3 +547,9 @@ header h1 {
     color: #5a6fd6;
     border-color: #5a6fd6;
 }
+
+#current-month-year {
+    color: white; /* Changes the text color to white */
+    font-weight: 600; /* Optional: Makes the text bolder for better visibility */
+    padding: 0 10px; /* Optional: Adds some horizontal padding */
+}
