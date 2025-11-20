@@ -219,7 +219,71 @@ async function submitChecklist() {
 // Render checklist
 function renderChecklist() {
     if (checklistItems.length === 0) {
-// ... (rest of function body before filteredItems.map) ...
+        checklistDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No checklist items available.</p>';
+        return;
+    }
+    
+    // Get today's actual date for comparison
+    const actualToday = getTodayDate();
+
+    // Sort items by period, process, equipment, then fallback to order
+    const sortedItems = [...checklistItems].sort((a, b) => {
+        const periodA = a.periodDays != null ? a.periodDays : Number.MAX_SAFE_INTEGER;
+        const periodB = b.periodDays != null ? b.periodDays : Number.MAX_SAFE_INTEGER;
+        if (periodA !== periodB) return periodA - periodB;
+
+        const processA = (a.process || '').toLowerCase();
+        const processB = (b.process || '').toLowerCase();
+        if (processA !== processB) return processA.localeCompare(processB);
+
+        const equipmentA = (a.equipment || '').toLowerCase();
+        const equipmentB = (b.equipment || '').toLowerCase();
+        if (equipmentA !== equipmentB) return equipmentA.localeCompare(equipmentB);
+
+        return (a.order || 0) - (b.order || 0);
+    });
+
+    const filteredItems = sortedItems.filter(item => {
+        // Manual filter matches
+        const processMatches = filterProcess === 'all' || (item.process || item.category || 'General') === filterProcess;
+        const equipmentMatches = filterEquipment === 'all' || (item.equipment || 'General') === filterEquipment;
+        const periodValue = item.periodDays != null ? String(item.periodDays) : 'custom';
+        const periodMatches = filterPeriod === 'all' || periodValue === filterPeriod;
+        
+        // Check if the item is already checked for the current date (by anyone)
+        const isAlreadyCheckedToday = checkedItems[item.id];
+        
+        // Rule 1 & 2: If checked OR viewing a past date, always show the item
+        if (isAlreadyCheckedToday || currentDate < actualToday) {
+            return processMatches && equipmentMatches && periodMatches;
+        }
+        
+        // Rule 3: If unchecked AND viewing today/future, apply periodic filter
+        
+        const periodDays = item.periodDays;
+        if (periodDays != null && periodDays > 0) {
+            const lastCompletionDate = lastCompletions[item.id];
+            
+            if (lastCompletionDate) {
+                // Calculate days since last completion
+                const lastDate = new Date(lastCompletionDate + 'T00:00:00');
+                const today = new Date(currentDate + 'T00:00:00');
+                const daysSince = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+                
+                // Hide task if NOT enough days have passed
+                if (daysSince < periodDays) {
+                    return false; 
+                }
+            }
+        }
+        
+        // If it passed all checks (manual filters and periodic requirement or never done), show it.
+        return processMatches && equipmentMatches && periodMatches;
+    });
+    
+    if (filteredItems.length === 0) {
+        checklistDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No items match the selected filters.</p>';
+        updateStats([]);
         return;
     }
 
@@ -227,23 +291,23 @@ function renderChecklist() {
         // Check if ANY user completed the task for visual checkmark
         const isChecked = checkedItems[item.id]; 
         
-        // --- START OF MODIFIED LOGIC ---
-        
+        // --- NEW/MODIFIED LOGIC START ---
         // Get an array of [user, data] pairs if item is checked
         const checkedEntries = checkedItems[item.id] ? Object.entries(checkedItems[item.id]) : [];
         
         let checkedByHtml = '';
         if (checkedEntries.length > 0) {
             checkedByHtml = checkedEntries.map(([user, data]) => {
-                const timeStr = formatTime(data.timestamp); // Format the timestamp
+                // Assuming formatTime function is defined elsewhere in app.js
+                const timeStr = formatTime(data.timestamp); 
                 
                 // Construct the span with the user name and the formatted time
                 return `<span class="checked-by">${escapeHtml(user)} ${timeStr}</span>`;
             }).join(', '); // Join multiple checkers with a comma
         }
         
-        // --- END OF MODIFIED LOGIC ---
-        
+        // --- NEW/MODIFIED LOGIC END ---
+
         const processLabel = item.process || item.category || 'General';
         const equipmentLabel = item.equipment || 'N/A';
         const taskLabel = item.item || item.text || 'Task';
@@ -262,7 +326,7 @@ function renderChecklist() {
                     </div>
                     ${checkedByHtml.length > 0 ? `
                         <div class="item-meta">
-                            Checked by: ${checkedByHtml} 
+                            Checked by: ${checkedByHtml}
                         </div>
                     ` : ''}
                     <div class="item-actions" onclick="event.stopPropagation();">
