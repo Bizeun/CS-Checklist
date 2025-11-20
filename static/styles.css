@@ -454,6 +454,11 @@ header h1 {
     border-color: #0a0;
 }
 
+.calendar-day.is-incomplete {
+    background-color: #ffe6e6 !important; /* Light Red/Pink */
+    border-color: #cc0000 !important;
+}
+
 #calendar-controls {
     text-align: center;
     margin-bottom: 20px;

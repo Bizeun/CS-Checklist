@@ -138,17 +138,18 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
             let statusClass;
             const checkedCount = dayData.total_checked;
 
-            if (checkedCount === 0) {
-                // Case 1: Nothing checked
+            if (checkedCount === 0 && dayData.submitted === false) { // Assuming document exists but 0 checks
+                // Case 1: Nothing checked (Incomplete)
                 statusText = '❌ Incomplete';
                 statusClass = 'incomplete';
+                dayClass += ' is-incomplete'; // <-- NEW CLASS HERE
             } else if (checkedCount === totalItemsCount) {
-                // Case 2: All items checked
+                // Case 2: All items checked (Checked)
                 statusText = '✅ Checked';
                 statusClass = 'checked';
-                dayClass += ' submitted'; // Keep the green background for fully checked days
+                dayClass += ' submitted'; 
             } else {
-                // Case 3: Some items checked, but not all
+                // Case 3: Some items checked, but not all (Ongoing)
                 statusText = '⚠️ Ongoing';
                 statusClass = 'ongoing';
             }
