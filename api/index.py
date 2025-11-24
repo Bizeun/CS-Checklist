@@ -90,6 +90,38 @@ def fetch_master_item_count():
         # Fallback in case of DB error
         return 0
 
+def fetch_master_items():
+    """Fetches the entire master checklist item list."""
+    try:
+        doc_ref = db.collection('config').document('checklist_items')
+        doc = doc_ref.get()
+        if doc.exists and 'items' in doc.to_dict():
+            return doc.to_dict()['items']
+        return []
+    except Exception:
+        return []
+
+def fetch_all_last_completions():
+    """Fetches the last completion date for each task across all dates (same as /api/checklist/last-completions)."""
+    try:
+        checklists_ref = db.collection('checklists')
+        all_checklists = checklists_ref.stream()
+
+        last_completions = {}  # {item_id: 'YYYY-MM-DD'}
+
+        for checklist_doc in all_checklists:
+            checklist_data = checklist_doc.to_dict()
+            checked = checklist_data.get('checked', {})
+            doc_date = checklist_doc.id
+
+            for item_id, users_checked in checked.items():
+                if users_checked:
+                    if item_id not in last_completions or doc_date > last_completions[item_id]:
+                        last_completions[item_id] = doc_date
+        return last_completions
+    except Exception:
+        return {}
+
 @app.get('/api/health')
 async def health():
     return JSONResponse({"status": "ok"})
@@ -281,6 +313,8 @@ async def get_calendar_summary(start_date: str, end_date: str):
         ensure_firebase()
         
         # Get the total number of tasks to use as the denominator in the summary
+        master_items = fetch_master_items() # Master item definitions
+        last_completions = fetch_all_last_completions() # Last completion dates
         total_master_items = fetch_master_item_count()
         
         # Convert string dates to datetime objects for comparison
@@ -295,13 +329,39 @@ async def get_calendar_summary(start_date: str, end_date: str):
             date_str = current_dt.strftime('%Y-%m-%d')
             doc_ref = db.collection('checklists').document(date_str)
             doc = doc_ref.get()
+
+            items_due_count = 0
+            
+            for item in master_items:
+                item_id = item.get('id')
+                period_days = item.get('periodDays')
+                
+                # Check if the task is due for the current day based on recurrence
+                is_due = True
+                
+                # Apply Rule 3: Periodic filter (Only if periodDays > 0)
+                if period_days is not None and period_days > 0:
+                    last_completion_date_str = last_completions.get(item_id)
+                    
+                    if last_completion_date_str:
+                        # Calculate days since last completion
+                        last_date_dt = datetime.strptime(last_completion_date_str, '%Y-%m-%d')
+                        # Use 00:00:00 time to align with the front-end's date comparison
+                        days_since = (current_dt.replace(hour=0, minute=0, second=0, microsecond=0) - last_date_dt.replace(hour=0, minute=0, second=0, microsecond=0)).days
+                        
+                        # Hide task if NOT enough days have passed
+                        if days_since < period_days:
+                            is_due = False
+
+                if is_due:
+                    items_due_count += 1
             
             # ... (rest of the day_summary calculation logic remains the same)
             day_summary = {
                 'submitted': False,
                 'total_checked': 0,
                 'users': {},  # {user_name: count}
-                'total_due': total_master_items
+                'total_due': items_due_count if items_due_count > 0 else total_master_items
             }
 
             if doc.exists:
@@ -324,12 +384,6 @@ async def get_calendar_summary(start_date: str, end_date: str):
                     
                     day_summary['total_checked'] = total_checked
                     day_summary['users'] = user_checks
-
-                if data and 'items' in data:
-                    try:
-                        day_summary['total_due'] = len(data.get('items', []))
-                    except Exception:
-                        day_summary['total_due'] = total_master_items
 
             summary_data[date_str] = day_summary
             
