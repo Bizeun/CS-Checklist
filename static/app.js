@@ -62,6 +62,7 @@ let lastCompletions = {}; // {item_id: 'YYYY-MM-DD'}
 let filterProcess = 'all';
 let filterEquipment = 'all';
 let filterPeriod = 'all';
+let uploadedPhotos = {};
 
 // DOM elements
 const dateInput = document.getElementById('date-input');
@@ -349,28 +350,43 @@ function renderChecklist() {
         const taskLabel = item.item || item.text || 'Task';
         const periodDays = item.periodDays || null;
         const periodLabel = formatPeriodLabel(periodDays);
-        
-        return `
+
+        const hasPhoto = uploadedPhotos[item.id];
+        const photoBtnText = hasPhoto ? '📷 Photo Added' : '📷 Upload Photo';
+        const photoBtnStyle = hasPhoto 
+            ? 'background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;' 
+            : 'background-color: #f0f0f0; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;';
+
+            return `
             <div class="checklist-item ${isChecked ? 'checked' : ''}" onclick="toggleCheck('${item.id}')">
                 <div class="checkbox"></div>
                 <div class="item-content">
                     <div class="item-text">${escapeHtml(taskLabel)}</div>
                     <div class="item-tags">
-                        <span class="tag tag-process">${escapeHtml(processLabel)}</span>
-                        <span class="tag tag-equipment">${escapeHtml(equipmentLabel)}</span>
-                        <span class="tag tag-period">${escapeHtml(periodLabel)}</span>
+                       <span class="tag tag-process">${escapeHtml(processLabel)}</span>
+                       <span class="tag tag-equipment">${escapeHtml(equipmentLabel)}</span>
+                       <span class="tag tag-period">${escapeHtml(periodLabel)}</span>
                     </div>
                     ${checkedByHtml.length > 0 ? `
                         <div class="item-meta">
                             Checked by: ${checkedByHtml}
                         </div>
                     ` : ''}
+                    
                     <div class="item-actions" onclick="event.stopPropagation();">
+                        <button 
+                            type="button"
+                            style="${photoBtnStyle} font-size: 0.9em;"
+                            onclick="triggerPhotoUpload('${item.id}')"
+                        >
+                            ${photoBtnText}
+                        </button>
+    
                         <textarea 
                             id="${noteInputId}" 
                             class="item-note-input" 
                             rows="1" 
-                            placeholder="Add notes for this item (optional)..."
+                            placeholder="Add notes..."
                             onblur="updateItemNote('${item.id}', this.value)"
                             onclick="event.stopPropagation();"
                         >${escapeHtml(existingNote)}</textarea>
@@ -484,6 +500,33 @@ function fillSelect(selectElement, values, defaultLabel, formatter) {
         selectElement.value = 'all';
     }
 }
+
+function triggerPhotoUpload(itemId) {
+    // Create a temporary hidden input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*'; // Only accept images
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // 1. Update local state with filename
+            uploadedPhotos[itemId] = file.name;
+            
+            // 2. Re-render to show the button state change
+            renderChecklist();
+            
+            // Optional: Log to console to prove it captured the file object
+            console.log(`Simulated upload for Item ${itemId}:`, file);
+        }
+    };
+    
+    // Open the file dialog
+    input.click();
+}
+
+// Expose to window so HTML onclick works
+window.triggerPhotoUpload = triggerPhotoUpload;
 
 // Make toggleCheck available globally
 window.toggleCheck = toggleCheck;
