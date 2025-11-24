@@ -300,7 +300,8 @@ async def get_calendar_summary(start_date: str, end_date: str):
             day_summary = {
                 'submitted': False,
                 'total_checked': 0,
-                'users': {}  # {user_name: count}
+                'users': {},  # {user_name: count}
+                'total_due': total_master_items
             }
 
             if doc.exists:
@@ -323,7 +324,13 @@ async def get_calendar_summary(start_date: str, end_date: str):
                     
                     day_summary['total_checked'] = total_checked
                     day_summary['users'] = user_checks
-            
+
+                if data and 'items' in data:
+                    try:
+                        day_summary['total_due'] = len(data.get('items', [])) + total_checked
+                    except Exception:
+                        day_summary['total_due'] = total_master_items
+
             summary_data[date_str] = day_summary
             
             # Move to the next day
