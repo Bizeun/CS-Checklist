@@ -327,7 +327,7 @@ async def get_calendar_summary(start_date: str, end_date: str):
 
                 if data and 'items' in data:
                     try:
-                        day_summary['total_due'] = len(data.get('items', [])) + total_checked
+                        day_summary['total_due'] = len(data.get('items', []))
                     except Exception:
                         day_summary['total_due'] = total_master_items
 
