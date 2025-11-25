@@ -388,7 +388,7 @@ function renderChecklist() {
                     </div>
                     ${checkedByHtml.length > 0 ? `
                         <div class="item-meta">
-                            Checked by: ${checkedByHtml}
+                            ${checkedByHtml}
                         </div>
                     ` : ''}
                     
