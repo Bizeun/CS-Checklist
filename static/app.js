@@ -47,10 +47,13 @@ function updateItemNote(itemId, note) {
     // Check if the item is already checked by the current user
     if (checkedItems[itemId] && checkedItems[itemId][currentUser]) {
         // Item is checked: update the note field in the local state
+        // This is now purely a LOCAL state update. The save happens via saveNoteOnly.
         checkedItems[itemId][currentUser].note = note;
+        // NEW: If the user is currently checking this item, immediately save the checklist
+        // This makes the note "submission" feel instant when they blur the field.
+        submitChecklist(false); // Pass 'false' to skip the alert, making it a silent save
     } 
     // If the item is not checked, we won't save the note until the user checks the item.
-    // The note will still be in the textarea for the next toggle action.
 }
 
 // Initialize
@@ -169,7 +172,13 @@ async function loadChecklist() {
 async function toggleCheck(itemId) {
     // If user name is empty, use 'anonymous' for tracking
     const activeUser = currentUser || 'anonymous';
-    
+
+    if (!currentUser || currentUser.trim() === '') {
+        alert('Please enter your name first before checking any item.');
+        userInput.focus();
+        return; // Stop the function execution
+    }
+
     // --- NEW: Read the note from the item's textarea ---
     // Get the element using the ID we defined in renderChecklist
     const noteInput = document.getElementById(`note-input-${itemId}`);
@@ -204,14 +213,14 @@ async function toggleCheck(itemId) {
 }
 
 // Submit the entire checklist (persist checked items and photos) for the current date
-async function submitChecklist() {
+async function submitChecklist(showAlert = true) {
     // Submission still requires a user name to avoid confusion in audit logs
     if (!currentUser) {
         alert('Please enter your name first before submitting the full checklist!');
         userInput.focus();
         return;
     }
-
+    
     const payload = {
         date: currentDate,
         items: checklistItems,
@@ -335,12 +344,17 @@ function renderChecklist() {
         if (checkedEntries.length > 0) {
             checkedByHtml = checkedEntries.map(([user, data]) => {
                 const timeStr = formatTime(data.timestamp); 
-                
-                // --- MODIFIED: REMOVED ${data.note ? ... } FROM HERE ---
+                const noteDisplay = data.note ? `<span class="note-display">: ${escapeHtml(data.note)}</span>` : '';
+
                 return `
                     <span class="checked-by">
                         ${escapeHtml(user)} ${timeStr}
                     </span>
+
+                    <span class="notes">
+                        ${escapeHtml(user)} ${noteDisplay}
+                    </span>
+
                 `;
             }).join(', '); // Join multiple checkers with a comma and space
         }
@@ -551,6 +565,42 @@ function toggleNoteBox(itemId) {
         }
     }
 }
+
+/**
+ * Saves the note associated with an item immediately by submitting the checklist state.
+ * @param {string} itemId 
+ */
+async function saveNoteOnly(itemId) {
+    if (!currentUser) {
+        alert('Please enter your name first before saving a note.');
+        userInput.focus();
+        return;
+    }
+
+    // Ensure the latest note value from the textarea is in the local state
+    const noteInput = document.getElementById(`note-input-${itemId}`);
+    if (noteInput) {
+        updateItemNote(itemId, noteInput.value);
+    }
+    
+    // Check if the item is actually checked by the current user before saving
+    if (!checkedItems[itemId] || !checkedItems[itemId][currentUser]) {
+        alert('You must check the item first before saving a standalone note.');
+        return;
+    }
+
+    // Call submitChecklist, which sends the entire local state, including the note
+    await submitChecklist();
+    
+    // Optional: Hide the note box after saving
+    toggleNoteBox(itemId, true); // Pass true to force close
+
+    // Re-render to show the note instantly in the checked-by line
+    renderChecklist(); 
+}
+
+// Make it global
+window.saveNoteOnly = saveNoteOnly;
 
 // Make it global
 window.toggleNoteBox = toggleNoteBox;
