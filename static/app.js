@@ -56,6 +56,70 @@ function updateItemNote(itemId, note) {
     // If the item is not checked, we won't save the note until the user checks the item.
 }
 
+/**
+ * Converts a JSON array of objects into a CSV string.
+ * @param {Array<object>} jsonArray - The array of objects (e.g., records/rows).
+ * @returns {string} The formatted CSV string.
+ */
+function convertToCsv(jsonArray) {
+    if (!jsonArray || jsonArray.length === 0) {
+        return '';
+    }
+
+    // 1. Get the Header Row
+    // We assume all objects have the same keys, using the first object for headers.
+    const headers = Object.keys(jsonArray[0]);
+    const headerRow = headers.join(',');
+
+    // 2. Get the Data Rows
+    const csvRows = jsonArray.map(row => {
+        return headers.map(fieldName => {
+            let cellData = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];
+            
+            // Handle values that might break CSV structure (e.g., contain commas or newlines)
+            if (typeof cellData === 'string' && (cellData.includes(',') || cellData.includes('"') || cellData.includes('\n'))) {
+                // Escape double quotes and enclose the entire field in double quotes
+                cellData = `"${cellData.replace(/"/g, '""')}"`;
+            } else if (typeof cellData === 'object') {
+                // Handle nested objects by converting them to a JSON string
+                cellData = JSON.stringify(cellData);
+            }
+            
+            return cellData;
+        }).join(',');
+    });
+
+    // 3. Combine header and rows
+    return [headerRow, ...csvRows].join('\n');
+}
+
+/**
+ * Triggers a download of a CSV string as a file.
+ * @param {Array<object>} data - The JSON data (array of objects) to convert.
+ * @param {string} filename - The name of the file to save.
+ */
+function downloadCsv(data, filename) {
+    // Convert the JSON data into a CSV string
+    const csvString = convertToCsv(data); 
+
+    // Create a Blob with the CSV content and the correct MIME type
+    // Note: 'text/csv;charset=utf-8;' is the standard MIME type.
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a temporary link element to trigger the download
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    
+    // Append and click the element to start the download
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
 // Initialize
 let currentDate = getDateFromUrl() || getTodayDate(); // *** FIX: Prioritize date from URL ***
 let currentUser = localStorage.getItem('checklist_user') || '';
@@ -671,7 +735,66 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'summary.html';
         });
     }
+
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            // Get the current date to construct the API URL dynamically
+            const date = new Date().toISOString().slice(0, 10); // e.g., "2025-11-26"
+            const apiUrl = `${API_BASE}/checklist?date=${date}`;
+    
+            fetch(apiUrl)
+                .then(response => {
+                    // Check if the request was successful
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    // Parse the response as JSON (assuming your API returns JSON)
+                    return response.json();
+                })
+                .then(data => {
+                    // Step 2: Call the function to handle the download
+                    downloadJson(data, `checklist_data_${date}.json`);
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error);
+                    alert('Failed to download data. Check the console for details.');
+                });
+        });
+    }
 });
+
+/**
+ * Triggers a download of a JSON object as a file.
+ * @param {object} data - The JSON object to download.
+ * @param {string} filename - The name of the file to save.
+ */
+function downloadJson(data, filename) {
+    // Convert the JavaScript object into a JSON string
+    const jsonString = JSON.stringify(data, null, 4); 
+
+    // Create a Blob (Binary Large Object) from the string
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    // Create a temporary anchor element
+    const a = document.createElement('a');
+    
+    // Create a URL for the Blob
+    a.href = URL.createObjectURL(blob);
+    
+    // Set the suggested filename
+    a.download = filename;
+    
+    // Append to the document body (required for Firefox)
+    document.body.appendChild(a);
+    
+    // Programmatically click the anchor to trigger the download
+    a.click();
+    
+    // Clean up: remove the temporary element and revoke the Blob URL
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
 
 // Load checklist on page load
 loadChecklist();
