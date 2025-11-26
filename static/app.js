@@ -56,68 +56,37 @@ function updateItemNote(itemId, note) {
     // If the item is not checked, we won't save the note until the user checks the item.
 }
 
-/**
- * Converts a JSON array of objects into a CSV string.
- * @param {Array<object>} jsonArray - The array of objects (e.g., records/rows).
- * @returns {string} The formatted CSV string.
- */
-function convertToCsv(jsonArray) {
-    if (!jsonArray || jsonArray.length === 0) {
-        return '';
+function nestedToCSV(obj) {
+    const rows = ["item,user,checked,timestamp,note"]; // header row
+
+    for (const itemKey in obj) {
+        const users = obj[itemKey];
+
+        for (const userName in users) {
+            const entry = users[userName];
+            const checked = entry.checked ?? "";
+            const timestamp = entry.timestamp ?? "";
+            const note = entry.note ?? "";
+
+            rows.push(`${itemKey},${userName},${checked},${timestamp},${note}`);
+        }
     }
 
-    // 1. Get the Header Row
-    // We assume all objects have the same keys, using the first object for headers.
-    const headers = Object.keys(jsonArray[0]);
-    const headerRow = headers.join(',');
-
-    // 2. Get the Data Rows
-    const csvRows = jsonArray.map(row => {
-        return headers.map(fieldName => {
-            let cellData = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];
-            
-            // Handle values that might break CSV structure (e.g., contain commas or newlines)
-            if (typeof cellData === 'string' && (cellData.includes(',') || cellData.includes('"') || cellData.includes('\n'))) {
-                // Escape double quotes and enclose the entire field in double quotes
-                cellData = `"${cellData.replace(/"/g, '""')}"`;
-            } else if (typeof cellData === 'object') {
-                // Handle nested objects by converting them to a JSON string
-                cellData = JSON.stringify(cellData);
-            }
-            
-            return cellData;
-        }).join(',');
-    });
-
-    // 3. Combine header and rows
-    return [headerRow, ...csvRows].join('\n');
+    return rows.join("\n");
 }
 
-/**
- * Triggers a download of a CSV string as a file.
- * @param {Array<object>} data - The JSON data (array of objects) to convert.
- * @param {string} filename - The name of the file to save.
- */
-function downloadCsv(data, filename) {
-    // Convert the JSON data into a CSV string
-    const csvString = convertToCsv(data); 
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
 
-    // Create a Blob with the CSV content and the correct MIME type
-    // Note: 'text/csv;charset=utf-8;' is the standard MIME type.
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    // Create a temporary link element to trigger the download
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    
-    // Append and click the element to start the download
-    document.body.appendChild(a);
-    a.click();
-    
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
+    URL.revokeObjectURL(url);
 }
 
 // Initialize
@@ -754,7 +723,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .then(data => {
                     // Step 2: Call the function to handle the download
-                    downloadJson(data, `checklist_data_${date}.json`);
+                    const csv = nestedToCSV(data.checked || {});
+                    downloadCSV(csv, `checklist_checked_${date}.csv`);
                 })
                 .catch(error => {
                     console.error('Error fetching or processing data:', error);
