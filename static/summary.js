@@ -159,13 +159,14 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
             let statusText;
             let statusClass;
             const checkedCount = dayData.total_checked;
+            const dueCount = dayData.total_due;
 
             if (checkedCount === 0 && dayData.submitted === false) { // Assuming document exists but 0 checks
                 // Case 1: Nothing checked (Incomplete)
                 statusText = '❌ Incomplete';
                 statusClass = 'incomplete';
                 dayClass += ' is-incomplete'; // <-- NEW CLASS HERE
-            } else if (checkedCount === totalItemsCount) {
+            } else if (checkedCount === dueCount) {
                 // Case 2: All items checked (Checked)
                 statusText = '✅ Checked';
                 statusClass = 'checked';
@@ -177,8 +178,6 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
             }
             
             // Note: The dayClass += ' submitted' from the old logic is now integrated into Case 2.
-            const dueCount = dayData.total_due;
-
             content += `
                 <div class="summary-details">
                     <p class="status ${statusClass}">${statusText}</p>

@@ -350,10 +350,11 @@ async def get_calendar_summary(start_date: str, end_date: str):
                         # Calculate days since last completion
                         last_date_dt = datetime.strptime(last_completion_date_str, '%Y-%m-%d')
                         # Use 00:00:00 time to align with the front-end's date comparison
-                        days_since = (current_dt.replace(hour=0, minute=0, second=0, microsecond=0) - last_date_dt.replace(hour=0, minute=0, second=0, microsecond=0)).days
-                        
+                        # days_since = (current_dt.replace(hour=0, minute=0, second=0, microsecond=0) - last_date_dt.replace(hour=0, minute=0, second=0, microsecond=0)).days
+                        days_since = (current_dt.date() - last_date_dt.date()).days
+
                         # Hide task if NOT enough days have passed
-                        if days_since < period_days:
+                        if last_date_dt.date() < current_dt.date() and days_since < period_days:
                             is_due = False
 
                 if is_due:
@@ -383,13 +384,6 @@ async def get_calendar_summary(start_date: str, end_date: str):
                     # user_checks = {}
                     period_checks = day_summary['period_checks']
 
-                    # for item_id, user_data in all_checked_items.items():
-                    #     period_days = item_period_map.get(item_id, 0)
-
-                    #     for user_name, check_info in user_data.items():
-                    #         if check_info.get('checked'):
-                    #             total_checked += 1
-                    #             user_checks[user_name] = user_checks.get(user_name, 0) + 1
                     for item_id, user_data in all_checked_items.items():
                         # Determine the period for this item
                         period_days = item_period_map.get(item_id, 0) # Default to 0 for non-periodic/unknown
@@ -403,11 +397,11 @@ async def get_calendar_summary(start_date: str, end_date: str):
                     
                     day_summary['total_checked'] = total_checked
 
-            for key in day_summary['period_checks']:
-                # Check if the key also exists in the second dictionary
-                if key in day_summary['period_due_counts']:
-                    # Add the values and store the result
-                    day_summary['period_due_counts'][key] = day_summary['period_checks'][key] + day_summary['period_due_counts'][key]
+            # for key in day_summary['period_checks']:
+            #     # Check if the key also exists in the second dictionary
+            #     if key in day_summary['period_due_counts']:
+            #         # Add the values and store the result
+            #         day_summary['period_due_counts'][key] = day_summary['period_checks'][key] + day_summary['period_due_counts'][key]
             
             day_summary['total_due'] = sum(day_summary['period_due_counts'].values())
 
@@ -445,15 +439,3 @@ async def serve_static(filename: str):
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
     return JSONResponse({"error": "Not found"}, status_code=404)
-
-
-# Vercel serverless function handler (ASGI)
-# Export an ASGI-compatible handler so Vercel can invoke this app.
-# async def handler(scope, receive, send):
-#     await app(scope, receive, send)
-
-
-# __all__ = ['handler', 'app']
-# from mangum import Mangum
-
-# handler = Mangum(app)
