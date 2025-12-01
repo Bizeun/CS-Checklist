@@ -39,10 +39,11 @@ def parse_excel(file_path):
         if not row:
             continue
 
-        process_val = str(row[0]).strip() if len(row) > 0 and row[0] else ''
-        equipment_val = str(row[1]).strip() if len(row) > 1 and row[1] else ''
-        item_text = str(row[2]).strip() if len(row) > 2 and row[2] else ''
-        period_val = row[3] if len(row) > 3 else None
+        category_val = str(row[0]).strip() if len(row) > 0 and row[0] else ''
+        process_val = str(row[1]).strip() if len(row) > 0 and row[0] else ''
+        equipment_val = str(row[2]).strip() if len(row) > 1 and row[1] else ''
+        item_text = str(row[3]).strip() if len(row) > 2 and row[2] else ''
+        period_val = row[4] if len(row) > 3 else None
 
         if not item_text:
             continue
@@ -60,7 +61,7 @@ def parse_excel(file_path):
             'equipment': equipment_val or 'General',
             'item': item_text,
             'text': item_text,  # Backwards compatibility with existing UI/API consumers
-            'category': process_val or 'General',
+            'category': category_val or 'General',
             'periodDays': period_days,
             'order': row_idx - 2
         }

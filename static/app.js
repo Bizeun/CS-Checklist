@@ -114,6 +114,7 @@ let lastCompletions = {}; // {item_id: 'YYYY-MM-DD'}
 let filterProcess = 'all';
 let filterEquipment = 'all';
 let filterPeriod = 'all';
+let filterCategory = 'all';
 let uploadedPhotos = {};
 
 // DOM elements
@@ -129,6 +130,7 @@ const progressSpan = document.getElementById('progress');
 const processFilterSelect = document.getElementById('filter-process');
 const equipmentFilterSelect = document.getElementById('filter-equipment');
 const periodFilterSelect = document.getElementById('filter-period');
+const categoryFilterSelect = document.getElementById('filter-category');
 
 // Set today's date
 dateInput.value = currentDate;
@@ -159,6 +161,11 @@ equipmentFilterSelect.addEventListener('change', (e) => {
 
 periodFilterSelect.addEventListener('change', (e) => {
     filterPeriod = e.target.value;
+    renderChecklist();
+});
+
+categoryFilterSelect.addEventListener('change', (e) => {
+    filterCategory = e.target.value;
     renderChecklist();
 });
 
@@ -331,7 +338,8 @@ function renderChecklist() {
 
     const filteredItems = sortedItems.filter(item => {
         // Manual filter matches
-        const processMatches = filterProcess === 'all' || (item.process || item.category || 'General') === filterProcess;
+        const categoryMatches = filterCategory === 'all' || (item.category || 'General') === filterCategory;
+        const processMatches = filterProcess === 'all' || (item.process || 'General') === filterProcess;
         const equipmentMatches = filterEquipment === 'all' || (item.equipment || 'General') === filterEquipment;
         const periodValue = item.periodDays != null ? String(item.periodDays) : 'custom';
         const periodMatches = filterPeriod === 'all' || periodValue === filterPeriod;
@@ -341,7 +349,7 @@ function renderChecklist() {
         
         // Rule 1 & 2: If checked OR viewing a past date, always show the item
         if (isAlreadyCheckedToday || currentDate < actualToday) {
-            return processMatches && equipmentMatches && periodMatches;
+            return categoryMatches && processMatches && equipmentMatches && periodMatches;
         }
         
         // Rule 3: If unchecked AND viewing today/future, apply periodic filter
@@ -364,7 +372,7 @@ function renderChecklist() {
         }
         
         // If it passed all checks (manual filters and periodic requirement or never done), show it.
-        return processMatches && equipmentMatches && periodMatches;
+        return categoryMatches && processMatches && equipmentMatches && periodMatches;
     });
     
     if (filteredItems.length === 0) {
@@ -540,9 +548,11 @@ function populateFilters() {
     const processSet = new Set();
     const equipmentSet = new Set();
     const periodSet = new Set();
+    const categorySet = new Set();
 
     checklistItems.forEach(item => {
-        processSet.add(item.process || item.category || 'General');
+        categorySet.add(item.category || 'General');
+        processSet.add(item.process || 'General');
         equipmentSet.add(item.equipment || 'General');
         const periodValue = item.periodDays != null ? String(item.periodDays) : 'custom';
         periodSet.add(periodValue);
@@ -550,6 +560,7 @@ function populateFilters() {
 
     fillSelect(processFilterSelect, Array.from(processSet).sort(), 'All processes');
     fillSelect(equipmentFilterSelect, Array.from(equipmentSet).sort(), 'All equipment');
+    fillSelect(categoryFilterSelect, Array.from(categorySet).sort(), 'All categories');
 
     const periodOptions = Array.from(periodSet).sort((a, b) => {
         const numA = a === 'custom' ? Number.MAX_SAFE_INTEGER : parseInt(a, 10);
