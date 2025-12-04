@@ -507,8 +507,9 @@ header h1 {
 /* --- Button Styles for .submit-btn (Used for Submit and View Summary) --- */
 .buttons {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 20px;              /* Adds space between the Submit and Summary buttons */
+    gap: 15px;              /* Adds space between the Submit and Summary buttons */
     margin-top: 20px;       /* Optional: Adds vertical space above the buttons */
     padding: 0 30px 30px;   /* Optional: Adds space at the bottom of the container */
 }
@@ -564,6 +565,9 @@ header h1 {
 .submit-btn {
     /* This ensures the wrapper div doesn't interfere */
     display: inline-block;
+    min-width: 150px; /* Ensures a minimum size before wrapping */
+    flex-grow: 1;    /* Allows the wrapper to grow and share space */
+    flex-shrink: 0;  /* Prevents the wrapper from shrinking too much */
 }
 
 /* --- Calendar Controls Button Enhancement --- */
