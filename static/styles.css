@@ -565,9 +565,6 @@ header h1 {
 .submit-btn {
     /* This ensures the wrapper div doesn't interfere */
     display: inline-block;
-    min-width: 150px; /* Ensures a minimum size before wrapping */
-    flex-grow: 1;    /* Allows the wrapper to grow and share space */
-    flex-shrink: 0;  /* Prevents the wrapper from shrinking too much */
 }
 
 /* --- Calendar Controls Button Enhancement --- */
