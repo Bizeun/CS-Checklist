@@ -8,6 +8,7 @@ import os
 from datetime import datetime, timedelta
 import json
 import time
+import pydantic
 # from dotenv import load_dotenv
 
 # load_dotenv()
@@ -34,34 +35,56 @@ if os.path.isdir(static_folder):
 # Initialize Firebase references
 db = None
 
+import base64
+
 def init_firebase():
     """Initialize Firebase services if needed."""
     global db
     if not firebase_admin._apps:
+        # 1. Try Base64 encoded env var (Safest for Vercel)
+        cred_b64 = os.environ.get('FIREBASE_CREDENTIALS_BASE64')
         cred_path = os.environ.get('FIREBASE_CREDENTIALS')
-        if cred_path:
-            # Handle potential newline escaping issues in Vercel environment variables
+        
+        cred_dict = None
+
+        if cred_b64:
             try:
-                # First try direct parsing
+                decoded_bytes = base64.b64decode(cred_b64)
+                decoded_str = decoded_bytes.decode('utf-8')
+                cred_dict = json.loads(decoded_str)
+                print("DEBUG: Successfully loaded credentials from FIREBASE_CREDENTIALS_BASE64")
+            except Exception as e:
+                print(f"DEBUG: Failed to decode FIREBASE_CREDENTIALS_BASE64: {e}")
+
+        # 2. If Base64 failed or missing, try standard JSON env var
+        if not cred_dict and cred_path:
+            try:
                 cred_dict = json.loads(cred_path)
             except json.JSONDecodeError:
-                # If that fails, try replacing escaped newlines
                 try:
-                    # Replace literal "\n" string with actual newline character
                     fixed_cred_path = cred_path.replace('\\n', '\n')
                     cred_dict = json.loads(fixed_cred_path)
                 except Exception as e:
-                    print(f"Error parsing FIREBASE_CREDENTIALS: {e}")
-                    raise e
-            
-            cred = credentials.Certificate(cred_dict)
-        else:
-            cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH', 'firebase-credentials.json')
-            if os.path.exists(cred_path):
-                cred = credentials.Certificate(cred_path)
+                    print(f"DEBUG: Failed to parse FIREBASE_CREDENTIALS: {e}")
+
+        # 3. If env vars failed, try local file (Local dev only)
+        if not cred_dict:
+            local_cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH', 'firebase-credentials.json')
+            if os.path.exists(local_cred_path):
+                cred = credentials.Certificate(local_cred_path)
+                print("DEBUG: Loaded credentials from local file")
             else:
-                raise Exception("Firebase credentials not found. Set FIREBASE_CREDENTIALS or FIREBASE_CREDENTIALS_PATH")
-        # Initialize the Firebase app using the constructed credentials
+                # Try absolute path
+                abs_path = os.path.join(project_root, 'firebase-credentials.json')
+                if os.path.exists(abs_path):
+                    cred = credentials.Certificate(abs_path)
+                    print("DEBUG: Loaded credentials from absolute local file path")
+                else:
+                    raise Exception("Firebase credentials not found. Set FIREBASE_CREDENTIALS_BASE64 env var.")
+        else:
+            cred = credentials.Certificate(cred_dict)
+        
+        # Initialize the Firebase app
         firebase_admin.initialize_app(cred)
 
     db = firestore.client()
