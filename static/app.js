@@ -8,10 +8,9 @@ function getTodayDate() {
     return new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 }
 
-// NEW: Function to read date from URL query parameter
+// Function to read date from URL query parameter
 function getDateFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    // Check if the URL parameter 'date' exists and is a valid date string
     const dateParam = params.get('date');
     if (dateParam && dateParam.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return dateParam;
@@ -21,14 +20,11 @@ function getDateFromUrl() {
 
 /**
  * Formats an ISO timestamp string to a readable time (e.g., 03:30 PM).
- * @param {string} timestamp - ISO 8601 string from Firestore.
- * @returns {string} Formatted time string.
  */
 function formatTime(timestamp) {
     if (!timestamp) return '';
     try {
         const date = new Date(timestamp);
-        // Formats to 12-hour time with AM/PM (e.g., 03:30 PM)
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
         console.error("Invalid timestamp:", timestamp);
@@ -36,89 +32,14 @@ function formatTime(timestamp) {
     }
 }
 
-/**
- * Updates the local checklist state when a note is typed, ensuring it's ready to be saved on next action.
- * @param {string} itemId 
- * @param {string} note 
- */
-function updateItemNote(itemId, note) {
-    if (!currentUser) return;
-
-    // Check if the item is already checked by the current user
-    if (checkedItems[itemId] && checkedItems[itemId][currentUser]) {
-        // Item is checked: update the note field in the local state
-        // This is now purely a LOCAL state update. The save happens via saveNoteOnly.
-        checkedItems[itemId][currentUser].note = note;
-        // NEW: If the user is currently checking this item, immediately save the checklist
-        // This makes the note "submission" feel instant when they blur the field.
-        submitChecklist(false); // Pass 'false' to skip the alert, making it a silent save
-    } 
-    // If the item is not checked, we won't save the note until the user checks the item.
-}
-
-/**
- * Converts the nested checked items object into a CSV string.
- * @param {object} obj - The checked items object {item_id: {user: {data}}}
- * @param {object} itemMap - A map of {item_id: item_object} for lookup.
- * @returns {string} The CSV content.
- */
-function nestedToCSV(obj, itemMap) {
-    const rows = ["item_id,item,user,checked,timestamp,note"];
-
-    for (const itemKey in obj) {
-        const users = obj[itemKey];
-        const itemDetails = itemMap[itemKey] || {};
-        const itemDescription = itemDetails.item || itemDetails.text || '';
-
-        for (const userName in users) {
-            const entry = users[userName];
-            const checked = entry.checked ?? "";
-            const timestamp = entry.timestamp ?? "";
-            const note = entry.note ? `"${String(entry.note).replace(/"/g, '""')}"` : "";
-
-            rows.push(`${itemKey},"${itemDescription}",${userName},${checked},${timestamp},${note}`);
-        }
-    }
-
-    return rows.join("\n");
-}
-
-// function downloadCSV(csvContent, filename) {
-//     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-//     const url = URL.createObjectURL(blob);
-
-//     const link = document.createElement("a");
-//     link.href = url;
-//     link.setAttribute("download", filename);
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-
-//     URL.revokeObjectURL(url);
-// }
-
-function downloadCSV(csvContent, filename) {
-    const bom = "\ufeff"; 
-    const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
-    
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-}
-
-// Initialize
-let currentDate = getDateFromUrl() || getTodayDate(); // *** FIX: Prioritize date from URL ***
+// Initialize variables
+let currentDate = getDateFromUrl() || getTodayDate();
 let currentUser = localStorage.getItem('checklist_user') || '';
+let currentLine = localStorage.getItem('checklist_line') || 'Line1';
+
 let checklistItems = [];
 let checkedItems = {};
-let lastCompletions = {}; // {item_id: 'YYYY-MM-DD'}
+let lastCompletions = {}; 
 let filterProcess = 'all';
 let filterEquipment = 'all';
 let filterPeriod = 'all';
@@ -128,6 +49,7 @@ let uploadedPhotos = {};
 // DOM elements
 const dateInput = document.getElementById('date-input');
 const userInput = document.getElementById('user-input');
+const lineInput = document.getElementById('line-input');
 const loadingDiv = document.getElementById('loading');
 const errorDiv = document.getElementById('error');
 const checklistContainer = document.getElementById('checklist-container');
@@ -140,22 +62,37 @@ const equipmentFilterSelect = document.getElementById('filter-equipment');
 const periodFilterSelect = document.getElementById('filter-period');
 const categoryFilterSelect = document.getElementById('filter-category');
 
-// Set today's date
+// Set initial values
 dateInput.value = currentDate;
 userInput.value = currentUser;
+if (lineInput) {
+    lineInput.value = currentLine;
+}
 
-// Event listeners
+// Helper: Construct document ID
+function getDocId() {
+    return `${currentDate}_${currentLine}`;
+}
+
+// Event Listeners
 dateInput.addEventListener('change', (e) => {
     currentDate = e.target.value;
     loadChecklist();
 });
 
 userInput.addEventListener('change', (e) => {
-    // Trim and use a default value for interaction logic
     currentUser = e.target.value.trim(); 
     localStorage.setItem('checklist_user', currentUser);
     renderChecklist();
 });
+
+if (lineInput) {
+    lineInput.addEventListener('change', (e) => {
+        currentLine = e.target.value;
+        localStorage.setItem('checklist_line', currentLine);
+        loadChecklist(); 
+    });
+}
 
 processFilterSelect.addEventListener('change', (e) => {
     filterProcess = e.target.value;
@@ -177,7 +114,7 @@ categoryFilterSelect.addEventListener('change', (e) => {
     renderChecklist();
 });
 
-// Load checklist items structure
+// Load item definitions
 async function loadChecklistItems() {
     try {
         const response = await fetch(`${API_BASE}/checklist/items`);
@@ -187,7 +124,6 @@ async function loadChecklistItems() {
             checklistItems = data.items;
             populateFilters();
         } else {
-            // If no items, show message
             showError('No checklist items found. Please run the setup script first.');
             return false;
         }
@@ -199,22 +135,20 @@ async function loadChecklistItems() {
     }
 }
 
-// Load checklist for current date
+// Load user data
 async function loadChecklist() {
     showLoading();
     hideError();
     
-    // First load the checklist items structure
     const itemsLoaded = await loadChecklistItems();
     if (!itemsLoaded) {
         return;
     }
     
-    // Load last completion dates and current date's checklist in parallel
     try {
         const [completionsResponse, checklistResponse] = await Promise.all([
             fetch(`${API_BASE}/checklist/last-completions`),
-            fetch(`${API_BASE}/checklist?date=${currentDate}`)
+            fetch(`${API_BASE}/checklist?date=${getDocId()}`)
         ]);
         
         const completionsData = await completionsResponse.json();
@@ -232,53 +166,49 @@ async function loadChecklist() {
     }
 }
 
-// Toggle check for an item
+// Toggle Check Logic
 async function toggleCheck(itemId) {
-    // If user name is empty, use 'anonymous' for tracking
     const activeUser = currentUser || 'anonymous';
 
     if (!currentUser || currentUser.trim() === '') {
         alert('Please enter your name first before checking any item.');
         userInput.focus();
-        return; // Stop the function execution
+        return; 
     }
 
-    // --- NEW: Read the note from the item's textarea ---
-    // Get the element using the ID we defined in renderChecklist
     const noteInput = document.getElementById(`note-input-${itemId}`);
-    // Capture the value. If the input doesn't exist (e.g., if the user hasn't fully implemented renderChecklist yet), default to an empty string.
     const note = noteInput ? noteInput.value : '';
-    // --- END NEW ---
 
-    // Ensure structure exists
     if (!checkedItems[itemId]) {
         checkedItems[itemId] = {};
     }
 
     if (checkedItems[itemId][activeUser]) {
-        // Uncheck locally
-        // Note: This correctly removes the note along with the check status
         delete checkedItems[itemId][activeUser];
         if (Object.keys(checkedItems[itemId]).length === 0) {
             delete checkedItems[itemId];
         }
     } else {
-        // Check locally with an ISO timestamp (server will replace with its timestamp on submit)
         checkedItems[itemId][activeUser] = {
             timestamp: new Date().toISOString(),
             checked: true,
-            // --- NEW: Store the captured note in local state ---
             note: note
         };
     }
-
-    // Do NOT update lastCompletions here; only update on submit when data is persisted
     renderChecklist();
 }
 
-// Submit the entire checklist (persist checked items and photos) for the current date
+// Update Note Logic
+function updateItemNote(itemId, note) {
+    if (!currentUser) return;
+    if (checkedItems[itemId] && checkedItems[itemId][currentUser]) {
+        checkedItems[itemId][currentUser].note = note;
+        submitChecklist(false); 
+    } 
+}
+
+// Submit Checklist
 async function submitChecklist(showAlert = true) {
-    // Submission still requires a user name to avoid confusion in audit logs
     if (!currentUser) {
         alert('Please enter your name first before submitting the full checklist!');
         userInput.focus();
@@ -286,7 +216,7 @@ async function submitChecklist(showAlert = true) {
     }
     
     const payload = {
-        date: currentDate,
+        date: getDocId(),
         items: checklistItems,
         checked: checkedItems
     };
@@ -303,9 +233,7 @@ async function submitChecklist(showAlert = true) {
 
         const data = await response.json();
         if (data.success) {
-            // After successful submit, reload from server to refresh last-completions
             await loadChecklist();
-            // alert('Checklist submitted successfully.');
         } else {
             throw new Error(data.error || 'Submit failed');
         }
@@ -317,17 +245,16 @@ async function submitChecklist(showAlert = true) {
     }
 }
 
-// Render checklist
+// Render Logic
 function renderChecklist() {
     if (checklistItems.length === 0) {
         checklistDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No checklist items available.</p>';
         return;
     }
     
-    // Get today's actual date for comparison
     const actualToday = getTodayDate();
 
-    // Sort items by period, process, equipment, then fallback to order
+    // Sort items
     const sortedItems = [...checklistItems].sort((a, b) => {
         const periodA = a.periodDays != null ? a.periodDays : Number.MAX_SAFE_INTEGER;
         const periodB = b.periodDays != null ? b.periodDays : Number.MAX_SAFE_INTEGER;
@@ -345,41 +272,31 @@ function renderChecklist() {
     });
 
     const filteredItems = sortedItems.filter(item => {
-        // Manual filter matches
         const categoryMatches = filterCategory === 'all' || (item.category || 'General') === filterCategory;
         const processMatches = filterProcess === 'all' || (item.process || 'General') === filterProcess;
         const equipmentMatches = filterEquipment === 'all' || (item.equipment || 'General') === filterEquipment;
         const periodValue = item.periodDays != null ? String(item.periodDays) : 'custom';
         const periodMatches = filterPeriod === 'all' || periodValue === filterPeriod;
         
-        // Check if the item is already checked for the current date (by anyone)
         const isAlreadyCheckedToday = checkedItems[item.id];
         
-        // Rule 1 & 2: If checked OR viewing a past date, always show the item
         if (isAlreadyCheckedToday || currentDate < actualToday) {
             return categoryMatches && processMatches && equipmentMatches && periodMatches;
         }
         
-        // Rule 3: If unchecked AND viewing today/future, apply periodic filter
-        
         const periodDays = item.periodDays;
         if (periodDays != null && periodDays > 0) {
             const lastCompletionDate = lastCompletions[item.id];
-            
             if (lastCompletionDate) {
-                // Calculate days since last completion
                 const lastDate = new Date(lastCompletionDate + 'T00:00:00');
                 const today = new Date(currentDate + 'T00:00:00');
                 const daysSince = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
                 
-                // Hide task if NOT enough days have passed
                 if (daysSince < periodDays) {
                     return false; 
                 }
             }
         }
-        
-        // If it passed all checks (manual filters and periodic requirement or never done), show it.
         return categoryMatches && processMatches && equipmentMatches && periodMatches;
     });
     
@@ -390,19 +307,14 @@ function renderChecklist() {
     }
 
     checklistDiv.innerHTML = filteredItems.map(item => {
-        // Check if ANY user completed the task for visual checkmark
         const isChecked = checkedItems[item.id]; 
-        
-        // 1. Determine the existing note for the current user
         let existingNote = '';
         const currentUserCheckData = checkedItems[item.id] ? checkedItems[item.id][currentUser] : null;
         if (currentUserCheckData && currentUserCheckData.note) {
             existingNote = currentUserCheckData.note;
         }
         
-        const noteInputId = `note-input-${item.id}`; // Unique ID for the textarea
-        
-        // 2. Get an array of [user, data] pairs if item is checked
+        const noteInputId = `note-input-${item.id}`;
         const checkedEntries = checkedItems[item.id] ? Object.entries(checkedItems[item.id]) : [];
         
         let checkedByHtml = '';
@@ -410,25 +322,22 @@ function renderChecklist() {
             checkedByHtml = checkedEntries.map(([user, data]) => {
                 const timeStr = formatTime(data.timestamp); 
                 const noteDisplay = data.note ? `<span class="note-display">: ${escapeHtml(data.note)}</span>` : '';
-
                 return `
                     <span class="checked-by">
                         ${escapeHtml(user)} ${timeStr}
                     </span>
-
                     <span class="notes">
                         ${escapeHtml(user)} ${noteDisplay}
                     </span>
-
                 `;
-            }).join(', '); // Join multiple checkers with a comma and space
+            }).join(', ');
         }
         
-        const processLabel = item.process || item.category || 'General';
-        const equipmentLabel = item.equipment || 'N/A';
+        const processLabel = item.process || 'General';
+        const equipmentLabel = item.equipment || 'General';
+        const categoryLabel = item.category || 'General';
         const taskLabel = item.item || item.text || 'Task';
-        const periodDays = item.periodDays || null;
-        const periodLabel = formatPeriodLabel(periodDays);
+        const periodLabel = formatPeriodLabel(item.periodDays);
 
         const hasPhoto = uploadedPhotos[item.id];
         const photoBtnText = hasPhoto ? '📷 Photo Added' : '📷 Upload Photo';
@@ -437,7 +346,6 @@ function renderChecklist() {
             : 'background-color: #f0f0f0; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;';
 
         const hasNote = existingNote && existingNote.trim().length > 0;
-        // If a note exists, show the box. If not, hide it.
         const noteDisplay = hasNote ? 'block' : 'none';
         const noteBtnText = hasNote ? '📝 Edit Note' : '📝 Add Note';
 
@@ -449,6 +357,7 @@ function renderChecklist() {
                     <div class="item-tags">
                         <span class="tag tag-process">${escapeHtml(processLabel)}</span>
                         <span class="tag tag-equipment">${escapeHtml(equipmentLabel)}</span>
+                        <span class="tag tag-category" style="background-color: #e0e0e0;">${escapeHtml(categoryLabel)}</span>
                         <span class="tag tag-period">${escapeHtml(periodLabel)}</span>
                     </div>
                     ${checkedByHtml.length > 0 ? `
@@ -458,32 +367,13 @@ function renderChecklist() {
                     ` : ''}
                     
                     <div class="item-actions" onclick="event.stopPropagation();">
-                        <button 
-                            type="button"
-                            class="action-btn"
-                            style="${photoBtnStyle} margin-right: 8px;"
-                            onclick="triggerPhotoUpload('${item.id}')"
-                        >
+                        <button type="button" class="action-btn" style="${photoBtnStyle} margin-right: 8px;" onclick="triggerPhotoUpload('${item.id}')">
                             ${photoBtnText}
                         </button>
-
-                        <button 
-                            type="button"
-                            class="action-btn"
-                            onclick="toggleNoteBox('${item.id}')"
-                        >
+                        <button type="button" class="action-btn" onclick="toggleNoteBox('${item.id}')">
                             ${noteBtnText}
                         </button>
-
-                        <textarea 
-                            id="${noteInputId}" 
-                            class="item-note-input" 
-                            rows="3" 
-                            style="display: ${noteDisplay};" 
-                            placeholder="Type your notes here..."
-                            onblur="updateItemNote('${item.id}', this.value)"
-                            onclick="event.stopPropagation();"
-                        >${escapeHtml(existingNote)}</textarea>
+                        <textarea id="${noteInputId}" class="item-note-input" rows="3" style="display: ${noteDisplay};" placeholder="Type your notes here..." onblur="updateItemNote('${item.id}', this.value)" onclick="event.stopPropagation();">${escapeHtml(existingNote)}</textarea>
                     </div>
                 </div>
             </div>
@@ -493,14 +383,9 @@ function renderChecklist() {
     updateStats(filteredItems);
 }
 
-// Update statistics
 function updateStats(visibleItems) {
     const total = visibleItems.length;
-    // Update stats to reflect checks by ANY user
-    const checked = visibleItems.filter(item =>
-        checkedItems[item.id] // Check if the item ID exists in checkedItems (meaning any user checked it)
-    ).length;
-
+    const checked = visibleItems.filter(item => checkedItems[item.id]).length;
     const progress = total > 0 ? Math.round((checked / total) * 100) : 0;
     
     totalItemsSpan.textContent = total;
@@ -508,7 +393,6 @@ function updateStats(visibleItems) {
     progressSpan.textContent = progress + '%';
 }
 
-// Utility functions
 function showLoading() {
     loadingDiv.style.display = 'block';
     checklistContainer.style.display = 'none';
@@ -537,18 +421,10 @@ function escapeHtml(text) {
 }
 
 function formatPeriodLabel(periodDays) {
-    if (!periodDays || Number.isNaN(periodDays)) {
-        return 'As needed';
-    }
-    if (periodDays === 1) {
-        return 'Daily';
-    }
-    if (periodDays === 7) {
-        return 'Weekly';
-    }
-    if (periodDays === 30) {
-        return 'Monthly';
-    }
+    if (!periodDays || Number.isNaN(periodDays)) return 'As needed';
+    if (periodDays === 1) return 'Daily';
+    if (periodDays === 7) return 'Weekly';
+    if (periodDays === 30) return 'Monthly';
     return `Every ${periodDays} days`;
 }
 
@@ -567,7 +443,7 @@ function populateFilters() {
     });
 
     fillSelect(processFilterSelect, Array.from(processSet).sort(), 'All processes');
-    fillSelect(equipmentFilterSelect, Array.from(equipmentSet).sort(), 'All equipment');
+    fillSelect(equipmentFilterSelect, Array.from(equipmentSet).sort(), 'All types');
     fillSelect(categoryFilterSelect, Array.from(categorySet).sort(), 'All categories');
 
     const periodOptions = Array.from(periodSet).sort((a, b) => {
@@ -576,9 +452,7 @@ function populateFilters() {
         return numA - numB;
     });
     fillSelect(periodFilterSelect, periodOptions, 'All frequencies', value => {
-        if (value === 'custom') {
-            return 'Custom';
-        }
+        if (value === 'custom') return 'Custom';
         return formatPeriodLabel(parseInt(value, 10));
     });
 }
@@ -598,30 +472,22 @@ function fillSelect(selectElement, values, defaultLabel, formatter) {
     }
 }
 
+// Photo Upload Logic
 function triggerPhotoUpload(itemId) {
-    // Create a temporary hidden input
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*'; // Only accept images
+    input.accept = 'image/*';
     
     input.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // 1. Update local state with filename
             uploadedPhotos[itemId] = file.name;
-            // --- START NEW CODE TO DISPLAY PHOTO ---
-
             const reader = new FileReader();
-
             reader.onload = function(event) {
-                // The result is the base64 encoded image string (Data URL)
                 const imageUrl = event.target.result;
-
-                // Create and insert an <img> element for preview
                 const imagePreviewId = `photo-preview-${itemId}`;
                 let previewElement = document.getElementById(imagePreviewId);
                 
-                // Find the specific item's action div to append the image to
                 const itemDiv = document.querySelector(`.checklist-item[onclick*="'${itemId}'"]`);
                 const contentDiv = itemDiv ? itemDiv.querySelector('.item-content') : null;
 
@@ -630,8 +496,6 @@ function triggerPhotoUpload(itemId) {
                         previewElement = document.createElement('img');
                         previewElement.id = imagePreviewId;
                         previewElement.className = 'photo-preview';
-                        
-                        // Basic styling to ensure visibility
                         previewElement.style.maxWidth = '100px'; 
                         previewElement.style.maxHeight = '100px';
                         previewElement.style.marginTop = '10px';
@@ -639,29 +503,15 @@ function triggerPhotoUpload(itemId) {
                         previewElement.style.borderRadius = '4px';
                         previewElement.style.border = '1px solid #ccc';
                         previewElement.style.display = 'block';
-
-                        // Append the new image preview to the item-content div
                         contentDiv.appendChild(previewElement); 
                     }
-                    
-                    // Set the image source
                     previewElement.src = imageUrl;
-                } else {
-                    console.error('Could not find checklist item element for preview.');
                 }
             };
-
-            // Read the file as a Data URL (base64)
             reader.readAsDataURL(file);            
-            // 2. Re-render to show the button state change
             renderChecklist();
-            
-            // Optional: Log to console to prove it captured the file object
-            console.log(`Simulated upload for Item ${itemId}:`, file);
         }
     };
-    
-    // Open the file dialog
     input.click();
 }
 
@@ -670,59 +520,69 @@ function toggleNoteBox(itemId) {
     if (noteBox) {
         if (noteBox.style.display === 'none') {
             noteBox.style.display = 'block';
-            noteBox.focus(); // Automatically focus cursor in the box
+            noteBox.focus(); 
         } else {
             noteBox.style.display = 'none';
         }
     }
 }
 
-/**
- * Saves the note associated with an item immediately by submitting the checklist state.
- * @param {string} itemId 
- */
 async function saveNoteOnly(itemId) {
     if (!currentUser) {
         alert('Please enter your name first before saving a note.');
         userInput.focus();
         return;
     }
-
-    // Ensure the latest note value from the textarea is in the local state
     const noteInput = document.getElementById(`note-input-${itemId}`);
     if (noteInput) {
         updateItemNote(itemId, noteInput.value);
     }
-    
-    // Check if the item is actually checked by the current user before saving
     if (!checkedItems[itemId] || !checkedItems[itemId][currentUser]) {
         alert('You must check the item first before saving a standalone note.');
         return;
     }
-
-    // Call submitChecklist, which sends the entire local state, including the note
     await submitChecklist();
-    
-    // Optional: Hide the note box after saving
-    toggleNoteBox(itemId, true); // Pass true to force close
-
-    // Re-render to show the note instantly in the checked-by line
+    toggleNoteBox(itemId, true);
     renderChecklist(); 
 }
 
-// Make it global
+function nestedToCSV(obj, itemMap) {
+    const rows = ["item_id,item,user,checked,timestamp,note"];
+    for (const itemKey in obj) {
+        const users = obj[itemKey];
+        const itemDetails = itemMap[itemKey] || {};
+        const itemDescription = itemDetails.item || itemDetails.text || '';
+        for (const userName in users) {
+            const entry = users[userName];
+            const checked = entry.checked ?? "";
+            const timestamp = entry.timestamp ?? "";
+            const note = entry.note ? `"${String(entry.note).replace(/"/g, '""')}"` : "";
+            rows.push(`${itemKey},"${itemDescription}",${userName},${checked},${timestamp},${note}`);
+        }
+    }
+    return rows.join("\n");
+}
+
+function downloadCSV(csvContent, filename) {
+    const bom = "\ufeff"; 
+    const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Global Exports
 window.saveNoteOnly = saveNoteOnly;
-
-// Make it global
 window.toggleNoteBox = toggleNoteBox;
-
-// Expose to window so HTML onclick works
 window.triggerPhotoUpload = triggerPhotoUpload;
-
-// Make toggleCheck available globally
 window.toggleCheck = toggleCheck;
 
-// Wire submit button
+// Document Ready
 document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
@@ -735,78 +595,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryNavBtn = document.getElementById('summary-btn');
     if (summaryNavBtn) {
         summaryNavBtn.addEventListener('click', () => {
-            // Redirect the user to the summary page
             window.location.href = 'summary.html';
         });
     }
 
     const downloadBtn = document.getElementById('download-btn');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                // 1. Get the date from the input field
-                const selectedDate = dateInput.value; // Accesses the globally defined dateInput DOM element
-                const itemMap = checklistItems.reduce((acc, item) => {
-                    acc[item.id] = item;
-                    return acc;
-                }, {});
-                
-                // 2. Use the selected date to construct the API URL
-                const apiUrl = `${API_BASE}/checklist?date=${selectedDate}`;
-        
-                fetch(apiUrl)
-                    .then(response => {
-                        // Check if the request was successful
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        // Parse the response as JSON
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Call the function to handle the download
-                        const csv = nestedToCSV(data.checked || {}, itemMap);
-                        // Update filename to reflect the selected date
-                        downloadCSV(csv, `checklist_checked_${selectedDate}.csv`);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching or processing data:', error);
-                        alert('Failed to download data. Check the console for details.');
-                    });
-            });
-        }
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            const selectedDate = getDocId(); 
+            const itemMap = checklistItems.reduce((acc, item) => {
+                acc[item.id] = item;
+                return acc;
+            }, {});
+            
+            const apiUrl = `${API_BASE}/checklist?date=${selectedDate}`;
+    
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const csv = nestedToCSV(data.checked || {}, itemMap);
+                    downloadCSV(csv, `checklist_checked_${selectedDate}.csv`);
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing data:', error);
+                    alert('Failed to download data. Check the console for details.');
+                });
+        });
+    }
 });
 
-// /**
-//  * Triggers a download of a JSON object as a file.
-//  * @param {object} data - The JSON object to download.
-//  * @param {string} filename - The name of the file to save.
-//  */
-// function downloadJson(data, filename) {
-//     // Convert the JavaScript object into a JSON string
-//     const jsonString = JSON.stringify(data, null, 4); 
-
-//     // Create a Blob (Binary Large Object) from the string
-//     const blob = new Blob([jsonString], { type: 'application/json' });
-
-//     // Create a temporary anchor element
-//     const a = document.createElement('a');
-    
-//     // Create a URL for the Blob
-//     a.href = URL.createObjectURL(blob);
-    
-//     // Set the suggested filename
-//     a.download = filename;
-    
-//     // Append to the document body (required for Firefox)
-//     document.body.appendChild(a);
-    
-//     // Programmatically click the anchor to trigger the download
-//     a.click();
-    
-//     // Clean up: remove the temporary element and revoke the Blob URL
-//     document.body.removeChild(a);
-//     URL.revokeObjectURL(a.href);
-// }
-
-// Load checklist on page load
+// Load initial checklist
 loadChecklist();

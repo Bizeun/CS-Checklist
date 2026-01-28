@@ -39,11 +39,18 @@ def parse_excel(file_path):
         if not row:
             continue
 
-        category_val = str(row[0]).strip() if len(row) > 0 and row[0] else ''
-        process_val = str(row[1]).strip() if len(row) > 0 and row[0] else ''
-        equipment_val = str(row[2]).strip() if len(row) > 1 and row[1] else ''
-        item_text = str(row[3]).strip() if len(row) > 2 and row[2] else ''
-        period_val = row[4] if len(row) > 3 else None
+        # New Column Mapping based on NND requirement:
+        # Col 0: Process (공정)
+        # Col 1: Vision Type (비전 타입 -> mapped to 'equipment' for compatibility)
+        # Col 2: Category (카테고리)
+        # Col 3: Item (항목)
+        # Col 4: Period (주기)
+
+        process_val = str(row[0]).strip() if len(row) > 0 and row[0] else ''
+        vision_type_val = str(row[1]).strip() if len(row) > 1 and row[1] else '' # Maps to equipment in DB
+        category_val = str(row[2]).strip() if len(row) > 2 and row[2] else ''
+        item_text = str(row[3]).strip() if len(row) > 3 and row[3] else ''
+        period_val = row[4] if len(row) > 4 else None
 
         if not item_text:
             continue
@@ -58,10 +65,10 @@ def parse_excel(file_path):
         item = {
             'id': f'item_{row_idx}',
             'process': process_val or 'General',
-            'equipment': equipment_val or 'General',
-            'item': item_text,
-            'text': item_text,  # Backwards compatibility with existing UI/API consumers
+            'equipment': vision_type_val or 'General', # Renaming 'Vision Type' to 'equipment' internally to keep DB schema simple
             'category': category_val or 'General',
+            'item': item_text,
+            'text': item_text,
             'periodDays': period_days,
             'order': row_idx - 2
         }
