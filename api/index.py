@@ -40,7 +40,20 @@ def init_firebase():
     if not firebase_admin._apps:
         cred_path = os.environ.get('FIREBASE_CREDENTIALS')
         if cred_path:
-            cred_dict = json.loads(cred_path)
+            # Handle potential newline escaping issues in Vercel environment variables
+            try:
+                # First try direct parsing
+                cred_dict = json.loads(cred_path)
+            except json.JSONDecodeError:
+                # If that fails, try replacing escaped newlines
+                try:
+                    # Replace literal "\n" string with actual newline character
+                    fixed_cred_path = cred_path.replace('\\n', '\n')
+                    cred_dict = json.loads(fixed_cred_path)
+                except Exception as e:
+                    print(f"Error parsing FIREBASE_CREDENTIALS: {e}")
+                    raise e
+            
             cred = credentials.Certificate(cred_dict)
         else:
             cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH', 'firebase-credentials.json')
