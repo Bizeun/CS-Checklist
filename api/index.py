@@ -34,12 +34,13 @@ if os.path.isdir(static_folder):
 
 # Initialize Firebase references
 db = None
+storage_bucket = None
 
 import base64
 
 def init_firebase():
     """Initialize Firebase services if needed."""
-    global db
+    global db, storage_bucket
     if not firebase_admin._apps:
         # 1. Try Base64 encoded env var (Safest for Vercel)
         cred_b64 = os.environ.get('FIREBASE_CREDENTIALS_BASE64')
@@ -84,10 +85,25 @@ def init_firebase():
         else:
             cred = credentials.Certificate(cred_dict)
         
+        # Get storage bucket name from environment or use default
+        bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET')
+        
         # Initialize the Firebase app
-        firebase_admin.initialize_app(cred)
+        if bucket_name:
+            firebase_admin.initialize_app(cred, {
+                'storageBucket': bucket_name
+            })
+        else:
+            firebase_admin.initialize_app(cred)
 
     db = firestore.client()
+    
+    # Initialize storage bucket if available
+    try:
+        storage_bucket = storage.bucket()
+    except Exception as e:
+        print(f"Warning: Storage bucket initialization failed: {e}")
+        storage_bucket = None
 
 # Attempt to initialize on import (will warn if missing config)
 try:
@@ -109,7 +125,7 @@ def make_json_serializable(data):
 
 def ensure_firebase():
     """Ensure Firebase services are ready before handling a request."""
-    global db
+    global db, storage_bucket
     if db is None:
         init_firebase()
 
@@ -137,6 +153,10 @@ def fetch_master_items():
     except Exception:
         return []
 
+def get_date_from_doc_id(doc_id):
+    """Extracts YYYY-MM-DD from doc_id, ignoring suffixes like _Line1."""
+    return doc_id.split('_')[0]
+
 def fetch_all_last_completions():
     """Fetches the last completion date for each task across all dates (same as /api/checklist/last-completions)."""
     try:
@@ -148,7 +168,7 @@ def fetch_all_last_completions():
         for checklist_doc in all_checklists:
             checklist_data = checklist_doc.to_dict()
             checked = checklist_data.get('checked', {})
-            doc_date = checklist_doc.id
+            doc_date = get_date_from_doc_id(checklist_doc.id)
 
             for item_id, users_checked in checked.items():
                 if users_checked:
@@ -306,6 +326,94 @@ async def set_checklist_items(payload: dict):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@app.post('/api/checklist/upload-photo')
+async def upload_photo(
+    file: UploadFile = File(...),
+    date: str = Form(...),
+    item_id: str = Form(...),
+    user: str = Form(...)
+):
+    """Upload a photo for a checklist item."""
+    try:
+        ensure_firebase()
+        
+        if not storage_bucket:
+            raise HTTPException(status_code=500, detail="Storage bucket not initialized")
+        
+        # Read file content
+        contents = await file.read()
+        
+        # Create a unique filename
+        timestamp = int(time.time() * 1000)
+        file_extension = os.path.splitext(file.filename)[1] or '.jpg'
+        filename = f"checklist_photos/{date}/{item_id}/{user}_{timestamp}{file_extension}"
+        
+        # Upload to Firebase Storage
+        blob = storage_bucket.blob(filename)
+        blob.upload_from_string(contents, content_type=file.content_type or 'image/jpeg')
+        
+        # Make the blob publicly accessible
+        blob.make_public()
+        
+        # Get the public URL
+        photo_url = blob.public_url
+        
+        # Save photo URL to Firestore
+        doc_ref = db.collection('checklists').document(date)
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            data = doc.to_dict()
+        else:
+            data = {'date': date, 'items': [], 'checked': {}}
+        
+        # Store photo URL in the checked item
+        if 'checked' not in data:
+            data['checked'] = {}
+        if item_id not in data['checked']:
+            data['checked'][item_id] = {}
+        if user not in data['checked'][item_id]:
+            data['checked'][item_id][user] = {
+                'timestamp': firestore.SERVER_TIMESTAMP,
+                'checked': True
+            }
+        
+        # Add photo URL to user's check data using ArrayUnion
+        from google.cloud.firestore import ArrayUnion
+        
+        current_time = datetime.utcnow().isoformat()
+        photo_data = {
+            'url': photo_url,
+            'filename': file.filename,
+            'uploaded_at': current_time
+        }
+        
+        # Use update with ArrayUnion to add photo to the array
+        update_path = f'checked.{item_id}.{user}.photos'
+        doc_ref.set({
+            'checked': {
+                item_id: {
+                    user: {
+                        'photos': ArrayUnion([photo_data])
+                    }
+                }
+            },
+            'lastUpdated': firestore.SERVER_TIMESTAMP
+        }, merge=True)
+        
+        return JSONResponse({
+            "success": True,
+            "photo_url": photo_url,
+            "filename": filename
+        })
+        
+    except Exception as e:
+        print(f"Error uploading photo: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get('/api/checklist/last-completions')
 async def get_last_completions():
     """Get the last completion date for each task across all dates."""
@@ -322,7 +430,8 @@ async def get_last_completions():
         for checklist_doc in all_checklists:
             checklist_data = checklist_doc.to_dict()
             checked = checklist_data.get('checked', {})
-            doc_date = checklist_doc.id  # Document ID is the date
+            # Fix: Handle suffixes in doc ID
+            doc_date = get_date_from_doc_id(checklist_doc.id)
 
             # For each item that was checked, track the most recent date
             for item_id, users_checked in checked.items():
@@ -343,7 +452,7 @@ async def get_last_completions():
 async def get_calendar_summary(start_date: str, end_date: str):
     """
     Retrieves summary data (who submitted, how many checked) for all dates 
-    between start_date and end_date (YYYY-MM-DD), and the total master item count.
+    between start_date and end_date (YYYY-MM-DD), aggregating all lines (suffixed docs).
     """
     try:
         ensure_firebase()
@@ -359,37 +468,46 @@ async def get_calendar_summary(start_date: str, end_date: str):
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
         end_dt = datetime.strptime(end_date, '%Y-%m-%d')
         
+        # Fetch ALL documents once to avoid N queries (optimization)
+        # Note: In a massive scale app, we would query by range filters, but here iteration is fine
+        checklists_ref = db.collection('checklists')
+        all_docs = checklists_ref.stream()
+        
+        # Organize docs by date key: { '2026-01-29': [doc1, doc2], ... }
+        docs_by_date = {}
+        for doc in all_docs:
+            date_part = get_date_from_doc_id(doc.id)
+            if date_part not in docs_by_date:
+                docs_by_date[date_part] = []
+            docs_by_date[date_part].append(doc)
+
         current_dt = start_dt
         summary_data = {}
         
         # Iterate through all days in the range
         while current_dt <= end_dt:
             date_str = current_dt.strftime('%Y-%m-%d')
-            doc_ref = db.collection('checklists').document(date_str)
-            doc = doc_ref.get()
+            
+            # Find relevant docs for this date (e.g. 2026-01-29, 2026-01-29_Line1, etc.)
+            relevant_docs = docs_by_date.get(date_str, [])
 
             items_due_count = 0
             period_due_counts = {}
 
+            # Calculate Due Counts based on Period (Rule 3)
             for item in master_items:
                 item_id = item.get('id')
                 period_days = item.get('periodDays')
                 
-                # Check if the task is due for the current day based on recurrence
                 is_due = True
                 
-                # Apply Rule 3: Periodic filter (Only if periodDays > 0)
                 if period_days is not None and period_days > 0:
                     last_completion_date_str = last_completions.get(item_id)
                     
                     if last_completion_date_str:
-                        # Calculate days since last completion
                         last_date_dt = datetime.strptime(last_completion_date_str, '%Y-%m-%d')
-                        # Use 00:00:00 time to align with the front-end's date comparison
-                        # days_since = (current_dt.replace(hour=0, minute=0, second=0, microsecond=0) - last_date_dt.replace(hour=0, minute=0, second=0, microsecond=0)).days
                         days_since = (current_dt.date() - last_date_dt.date()).days
 
-                        # Hide task if NOT enough days have passed
                         if last_date_dt.date() < current_dt.date() and days_since < period_days:
                             is_due = False
 
@@ -397,7 +515,6 @@ async def get_calendar_summary(start_date: str, end_date: str):
                     items_due_count += 1
                     period_due_counts[period_days] = period_due_counts.get(period_days, 0) + 1
 
-            # ... (rest of the day_summary calculation logic remains the same)
             day_summary = {
                 'submitted': False,
                 'total_checked': 0,
@@ -407,51 +524,44 @@ async def get_calendar_summary(start_date: str, end_date: str):
                 'period_due_counts': period_due_counts
             }
 
-            if doc.exists:
-                data = doc.to_dict()
+            # Aggregate data from all matching documents (Line 1, Line 2, etc.)
+            if relevant_docs:
+                day_summary['submitted'] = True
+                total_checked = 0
+                period_checks = day_summary['period_checks']
                 
-                # Check if the document has any checked items
-                if data and data.get('checked'):
-                    day_summary['submitted'] = True
-                    all_checked_items = data['checked']
-                    
-                    # Calculate total checks and user counts
-                    total_checked = 0
-                    # user_checks = {}
-                    period_checks = day_summary['period_checks']
+                # To avoid double counting the same item checked by same user on different lines (unlikely but safe)
+                # we track unique item checks? Or just sum them up?
+                # Usually we want Total Check Actions.
+                
+                for doc in relevant_docs:
+                    data = doc.to_dict()
+                    if data and data.get('checked'):
+                        all_checked_items = data['checked']
+                        
+                        for item_id, user_data in all_checked_items.items():
+                            period_days = item_period_map.get(item_id, 0)
 
-                    for item_id, user_data in all_checked_items.items():
-                        # Determine the period for this item
-                        period_days = item_period_map.get(item_id, 0) # Default to 0 for non-periodic/unknown
+                            for user_name, check_info in user_data.items():
+                                if check_info.get('checked'):
+                                    total_checked += 1
+                                    period_checks[period_days] = period_checks.get(period_days, 0) + 1
+                                    # Just count action once per item per doc
+                                    break 
+                
+                day_summary['total_checked'] = total_checked
 
-                        for user_name, check_info in user_data.items():
-                            if check_info.get('checked'):
-                                total_checked += 1
-                                # Aggregate by period_days
-                                period_checks[period_days] = period_checks.get(period_days, 0) + 1
-                                break # Count an item check once, regardless of how many users checked it
-                    
-                    day_summary['total_checked'] = total_checked
-
-            # for key in day_summary['period_checks']:
-            #     # Check if the key also exists in the second dictionary
-            #     if key in day_summary['period_due_counts']:
-            #         # Add the values and store the result
-            #         day_summary['period_due_counts'][key] = day_summary['period_checks'][key] + day_summary['period_due_counts'][key]
-            
             day_summary['total_due'] = sum(day_summary['period_due_counts'].values())
-
             summary_data[date_str] = day_summary
             
-            # Move to the next day
             current_dt += timedelta(days=1)
 
-        # Return the summary data and the total item count
         return JSONResponse({'summaryData': summary_data, 'totalMasterItems': total_master_items})
         
     except Exception as e:
-        # ... (rest of the error handling)
         print(f"Error fetching calendar summary: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 # -------- Static asset helpers for local dev -------- #
