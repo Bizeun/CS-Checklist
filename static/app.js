@@ -417,6 +417,14 @@ function renderChecklist() {
         }
 
         const periodLabel = formatPeriodLabel(item.periodDays);
+        
+        // Add class based on process type for styling
+        let processClass = '';
+        if (item.process === '양극') {
+            processClass = 'cathode';
+        } else if (item.process === '음극') {
+            processClass = 'anode';
+        }
 
         const hasPhoto = uploadedPhotos[item.id] && uploadedPhotos[item.id].length > 0;
         const photoBtnText = hasPhoto ? (currentLang === 'en' ? '📷 Photo Added' : '📷 사진 추가됨') : (currentLang === 'en' ? '📷 Upload Photo' : '📷 사진 업로드');
@@ -452,7 +460,7 @@ function renderChecklist() {
                 <div class="item-content">
                     <div class="item-text">${escapeHtml(taskLabel)}</div>
                     <div class="item-tags">
-                        <span class="tag tag-process">${escapeHtml(processLabel)}</span>
+                        <span class="tag tag-process ${processClass}">${escapeHtml(processLabel)}</span>
                         <span class="tag tag-equipment">${escapeHtml(equipmentLabel)}</span>
                         <span class="tag tag-category" style="background-color: #e0e0e0;">${escapeHtml(categoryLabel)}</span>
                         <span class="tag tag-period">${escapeHtml(periodLabel)}</span>

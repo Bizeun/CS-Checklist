@@ -152,23 +152,46 @@ header h1 {
 .lang-btn:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+.loading {
     text-align: center;
-    padding: 60px 20px;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading p {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #667eea;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
 .spinner {
-    border: 4px solid rgba(102, 126, 234, 0.1);
-    border-top: 4px solid #667eea;
+    border: 5px solid rgba(102, 126, 234, 0.15);
+    border-top: 5px solid #667eea;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 70px;
+    height: 70px;
     animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .error {
@@ -322,6 +345,27 @@ header h1 {
 .tag-process {
     background: #e3f2fd;
     color: #1565c0;
+    border: 2px solid transparent;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 양극 (Cathode) - 빨간색 그라데이션 */
+.tag-process.cathode {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    border: 3px solid #c92a2a;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 음극 (Anode) - 파란색 그라데이션 */
+.tag-process.anode {
+    background: linear-gradient(135deg, #4dabf7 0%, #339af0 100%);
+    color: white;
+    border: 3px solid #1971c2;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .tag-equipment {
