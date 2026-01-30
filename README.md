@@ -4,11 +4,11 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
 
 ---
 
-## 🎮 Version Updates
+## Version Updates
 
-### Version 2.0.0 (2026-01-30)
+### Version 0.1.0 (2026-01-30)
 
-#### ✨ New Features
+#### New Features
 - **Photo Upload**: Upload images for each checklist item (Firebase Storage)
 - **Notes System**: Add comments/notes to any task
 - **Multi-language Support**: Toggle between 한글 ⟷ English
@@ -28,26 +28,24 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
 - Fixed filter not showing 공통 items when specific Vision Type selected
 - Improved checklist item persistence
 
-#### Security
-- Added Firebase Storage security rules
-- Base64 credential encoding for Vercel deployment
+
 
 ---
 
-## 📋 Current Features
+## Current Features
 
-- ✅ Daily checklist tracking with progress stats
-- 👥 Multi-user support (each user can mark their own checks)
-- 📅 Date-based tracking with period-based filtering
-- 🔎 Advanced filters (Process, Vision Type, Category, Frequency)
-- 🌐 Bilingual UI (한글/English)
-- 📸 Photo uploads with gallery view
-- 📝 Task notes and comments
-- 📊 Calendar summary view
-- 💾 Firebase Firestore + Storage
-- ☁️ Vercel deployment
+- Daily checklist tracking with progress stats
+- Multi-user support (each user can mark their own checks)
+- Date-based tracking with period-based filtering
+- Advanced filters (Process, Vision Type, Category, Frequency)
+- Bilingual UI (한글/English)
+- Photo uploads with gallery view
+- Task notes and comments
+- Calendar summary view
+- Firebase Firestore + Storage
+- Vercel deployment
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.10+ | Firebase project | Vercel account
@@ -80,9 +78,9 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
    git push origin main  # Auto-deploy
    ```
 
-5. **Done!** 🎉
+5. **Done!** 
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 api/index.py              # FastAPI backend
@@ -92,7 +90,7 @@ create_new_excel.py       # Generate checklist template
 vercel.json              # Deployment config
 ```
 
-## 🎯 How to Use
+## How to Use
 
 **Daily Checklist**
 1. Enter name → Select line (#1-4) → Pick date
@@ -109,21 +107,14 @@ vercel.json              # Deployment config
 **Download**
 - Click "Download Checklist" for CSV export
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| 📸 Photo upload fails | Enable Firebase Storage → Set `FIREBASE_STORAGE_BUCKET` env var → Redeploy |
-| 🔥 Firebase not connecting | Check `FIREBASE_CREDENTIALS_BASE64` in Vercel (no line breaks!) |
-| 📋 No checklist items | Run `python scripts/parse_excel.py` to upload items |
-| 💾 Items don't save | Click "Submit" button → Check browser console for errors |
-
-## 🔑 Environment Variables
-
-| Variable | Required | Example |
-|----------|----------|---------|
-| `FIREBASE_CREDENTIALS_BASE64` | ✅ | `eyJ0eXBlIjoi...` |
-| `FIREBASE_STORAGE_BUCKET` | ✅ | `project-id.firebasestorage.app` |
+| Photo upload fails | Enable Firebase Storage → Set `FIREBASE_STORAGE_BUCKET` env var → Redeploy |
+| Firebase not connecting | Check `FIREBASE_CREDENTIALS_BASE64` in Vercel (no line breaks!) |
+| No checklist items | Run `python scripts/parse_excel.py` to upload items |
+| Items don't save | Click "Submit" button → Check browser console for errors |
 
 ## License
 
