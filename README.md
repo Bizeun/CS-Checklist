@@ -28,8 +28,6 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
 - Fixed filter not showing 공통 items when specific Vision Type selected
 - Improved checklist item persistence
 
-
-
 ---
 
 ## Current Features

@@ -452,7 +452,7 @@ function renderChecklist() {
         const hasNote = existingNote && existingNote.trim().length > 0;
         const noteDisplay = hasNote ? 'block' : 'none';
         const noteBtnText = hasNote ? (currentLang === 'en' ? '📝 Edit Note' : '📝 메모 수정') : (currentLang === 'en' ? '📝 Add Note' : '📝 메모 추가');
-        const notePlaceholder = currentLang === 'en' ? "Type your notes here..." : "메모를 입력하세요...";
+        const notePlaceholder = currentLang === 'en' ? "Enter special issues or actions taken for issues" : "특이사항 혹은 문제 발생 시 조치 사항을 입력하세요";
 
             return `
             <div class="checklist-item ${isChecked ? 'checked' : ''}" onclick="toggleCheck('${item.id}')">
