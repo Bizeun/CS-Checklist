@@ -9,12 +9,13 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
 ### Version 0.1.0 (2026-01-30)
 
 #### New Features
-- **Photo Upload**: Upload images for each checklist item (Firebase Storage)
-- **Notes System**: Add comments/notes to any task
-- **Multi-language Support**: Toggle between 한글 ⟷ English
-- **Calendar Summary**: Monthly view with completion tracking
-- **Enhanced UI**: Gradient tags for 양극(red)/음극(blue) with bold borders
-- **Auto-save**: Toggle checked items without manual submit
+- 📅 **Production Schedule**: Daily schedule management for all 4 lines with status tracking
+- 📸 **Photo Upload**: Upload images for each checklist item (Firebase Storage)
+- 📝 **Notes System**: Add comments/notes to any task
+- 🌐 **Multi-language Support**: Toggle between 한글 ⟷ English
+- 📊 **Calendar Summary**: Monthly view with completion tracking
+- 🎨 **Enhanced UI**: Gradient tags for 양극(red)/음극(blue) with bold borders
+- 💾 **Auto-save**: Toggle checked items without manual submit
 
 #### Improvements
 - Added 4 Vision Types: 공통, 통합, NG mark, 포일, 탈리(Delamination)
@@ -32,16 +33,17 @@ A web-based checklist application for tracking daily tasks. Built with Python (F
 
 ## Current Features
 
-- Daily checklist tracking with progress stats
-- Multi-user support (each user can mark their own checks)
-- Date-based tracking with period-based filtering
-- Advanced filters (Process, Vision Type, Category, Frequency)
-- Bilingual UI (한글/English)
-- Photo uploads with gallery view
-- Task notes and comments
-- Calendar summary view
-- Firebase Firestore + Storage
-- Vercel deployment
+- ✅ Daily checklist tracking with progress stats
+- 👥 Multi-user support (each user can mark their own checks)
+- 📅 Production schedule management (4 lines with status tracking)
+- 📅 Date-based tracking with period-based filtering
+- 🔎 Advanced filters (Process, Vision Type, Category, Frequency)
+- 🌐 Bilingual UI (한글/English)
+- 📸 Photo uploads with gallery view
+- 📝 Task notes and comments
+- 📊 Calendar summary view
+- 💾 Firebase Firestore + Storage
+- ☁️ Vercel deployment
 
 ## Quick Start
 
@@ -89,6 +91,17 @@ vercel.json              # Deployment config
 ```
 
 ## How to Use
+
+**Production Schedule** 📅
+1. Click "📅 오늘 생산 일정표" button (first button)
+2. View all 4 lines in modal popup
+3. For each line:
+   - Set status (대기중/진행중/완료)
+   - Enter production schedule
+   - Add notes/special remarks
+   - Click "저장" to save
+4. Last editor and time shown automatically
+5. All team members can view and edit
 
 **Daily Checklist**
 1. Enter name → Select line (#1-4) → Pick date

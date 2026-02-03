@@ -94,6 +94,9 @@
 
             <div class="buttons">
                 <div class="submit-btn">
+                    <button id="schedule-btn" class="schedule-btn">📅 오늘 생산 일정표</button>
+                </div>
+                <div class="submit-btn">
                     <button id="submit-btn" class="submit-btn">Submit Checklist</button>
                 </div>
                 <div class="submit-btn"> 
@@ -106,6 +109,113 @@
 
             <div class="checklist" id="checklist">
                 <!-- Checklist items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Schedule Modal -->
+    <div id="schedule-modal" class="modal" style="display: none;">
+        <div class="modal-content schedule-modal-content">
+            <div class="modal-header">
+                <h2>📅 라인별 생산 일정</h2>
+                <span class="close-schedule" style="cursor: pointer; font-size: 28px;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Line 1 -->
+                <div class="schedule-line">
+                    <div class="schedule-line-header">
+                        <h3>Line #1</h3>
+                        <select id="line1-status" class="status-select">
+                            <option value="pending">대기중</option>
+                            <option value="in_progress">진행중</option>
+                            <option value="completed">완료</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>생산 일정:</label>
+                        <input type="text" id="line1-schedule" placeholder="예: 양극 2호기 점검 14:00">
+                    </div>
+                    <div class="form-group">
+                        <label>특이사항/메모:</label>
+                        <textarea id="line1-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <div class="last-update">
+                        <span id="line1-last-update">수정 기록 없음</span>
+                    </div>
+                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line1')">저장</button>
+                </div>
+
+                <!-- Line 2 -->
+                <div class="schedule-line">
+                    <div class="schedule-line-header">
+                        <h3>Line #2</h3>
+                        <select id="line2-status" class="status-select">
+                            <option value="pending">대기중</option>
+                            <option value="in_progress">진행중</option>
+                            <option value="completed">완료</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>생산 일정:</label>
+                        <input type="text" id="line2-schedule" placeholder="예: 음극 1호기 A-Lot">
+                    </div>
+                    <div class="form-group">
+                        <label>특이사항/메모:</label>
+                        <textarea id="line2-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <div class="last-update">
+                        <span id="line2-last-update">수정 기록 없음</span>
+                    </div>
+                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line2')">저장</button>
+                </div>
+
+                <!-- Line 3 -->
+                <div class="schedule-line">
+                    <div class="schedule-line-header">
+                        <h3>Line #3</h3>
+                        <select id="line3-status" class="status-select">
+                            <option value="pending">대기중</option>
+                            <option value="in_progress">진행중</option>
+                            <option value="completed">완료</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>생산 일정:</label>
+                        <input type="text" id="line3-schedule" placeholder="예: 설비 점검 예정">
+                    </div>
+                    <div class="form-group">
+                        <label>특이사항/메모:</label>
+                        <textarea id="line3-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <div class="last-update">
+                        <span id="line3-last-update">수정 기록 없음</span>
+                    </div>
+                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line3')">저장</button>
+                </div>
+
+                <!-- Line 4 -->
+                <div class="schedule-line">
+                    <div class="schedule-line-header">
+                        <h3>Line #4</h3>
+                        <select id="line4-status" class="status-select">
+                            <option value="pending">대기중</option>
+                            <option value="in_progress">진행중</option>
+                            <option value="completed">완료</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>생산 일정:</label>
+                        <input type="text" id="line4-schedule" placeholder="예: B-Lot 생산 중">
+                    </div>
+                    <div class="form-group">
+                        <label>특이사항/메모:</label>
+                        <textarea id="line4-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    </div>
+                    <div class="last-update">
+                        <span id="line4-last-update">수정 기록 없음</span>
+                    </div>
+                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line4')">저장</button>
+                </div>
             </div>
         </div>
     </div>

@@ -804,5 +804,108 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Production Schedule Functions
+async function loadSchedule() {
+    const date = getDocId().split('_')[0]; // Get date part only
+    
+    try {
+        const response = await fetch(`${API_BASE}/schedule?date=${date}`);
+        const data = await response.json();
+        
+        // Update UI for all lines
+        ['Line1', 'Line2', 'Line3', 'Line4'].forEach(line => {
+            const lineData = data[line] || {};
+            const lineNum = line.toLowerCase().replace('line', 'line');
+            
+            // Set values
+            document.getElementById(`${lineNum}-status`).value = lineData.status || 'pending';
+            document.getElementById(`${lineNum}-schedule`).value = lineData.schedule || '';
+            document.getElementById(`${lineNum}-notes`).value = lineData.notes || '';
+            
+            // Update last modified info
+            const lastUpdateEl = document.getElementById(`${lineNum}-last-update`);
+            if (lineData.updated_by && lineData.updated_at) {
+                const time = formatTime(lineData.updated_at);
+                lastUpdateEl.textContent = `${lineData.updated_by} ${time}`;
+            } else {
+                lastUpdateEl.textContent = '수정 기록 없음';
+            }
+        });
+    } catch (error) {
+        console.error('Error loading schedule:', error);
+        alert('일정을 불러오는데 실패했습니다.');
+    }
+}
+
+async function saveLineSchedule(line) {
+    if (!currentUser || currentUser.trim() === '') {
+        alert('이름을 먼저 입력해주세요!');
+        userInput.focus();
+        return;
+    }
+    
+    const lineNum = line.toLowerCase().replace('line', 'line');
+    const date = getDocId().split('_')[0];
+    
+    const data = {
+        date: date,
+        line: line,
+        user: currentUser,
+        status: document.getElementById(`${lineNum}-status`).value,
+        schedule: document.getElementById(`${lineNum}-schedule`).value,
+        notes: document.getElementById(`${lineNum}-notes`).value
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE}/schedule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`${line} 일정이 저장되었습니다!`);
+            loadSchedule(); // Reload to show updated info
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+    } catch (error) {
+        console.error('Error saving schedule:', error);
+        alert('일정 저장에 실패했습니다: ' + error.message);
+    }
+}
+
+// Make function available globally
+window.saveLineSchedule = saveLineSchedule;
+
+// Schedule modal event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const scheduleBtn = document.getElementById('schedule-btn');
+    const scheduleModal = document.getElementById('schedule-modal');
+    const closeSchedule = document.querySelector('.close-schedule');
+    
+    if (scheduleBtn) {
+        scheduleBtn.addEventListener('click', () => {
+            scheduleModal.style.display = 'block';
+            loadSchedule();
+        });
+    }
+    
+    if (closeSchedule) {
+        closeSchedule.addEventListener('click', () => {
+            scheduleModal.style.display = 'none';
+        });
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === scheduleModal) {
+            scheduleModal.style.display = 'none';
+        }
+    });
+});
+
 // Load initial checklist
 loadChecklist();

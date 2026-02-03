@@ -564,6 +564,62 @@ async def get_calendar_summary(start_date: str, end_date: str):
         traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
+@app.get('/api/schedule')
+async def get_schedule(date: str):
+    """Get production schedule for all lines on a specific date."""
+    try:
+        ensure_firebase()
+        
+        doc_ref = db.collection('schedules').document(date)
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            data = doc.to_dict()
+            return JSONResponse(make_json_serializable(data))
+        else:
+            # Return empty structure for all lines
+            return JSONResponse({
+                'date': date,
+                'Line1': {'status': 'pending', 'schedule': '', 'notes': '', 'updated_by': '', 'updated_at': ''},
+                'Line2': {'status': 'pending', 'schedule': '', 'notes': '', 'updated_by': '', 'updated_at': ''},
+                'Line3': {'status': 'pending', 'schedule': '', 'notes': '', 'updated_by': '', 'updated_at': ''},
+                'Line4': {'status': 'pending', 'schedule': '', 'notes': '', 'updated_by': '', 'updated_at': ''}
+            })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post('/api/schedule')
+async def save_schedule(payload: dict):
+    """Save production schedule for a specific line."""
+    date = payload.get('date')
+    line = payload.get('line')
+    user = payload.get('user', 'Anonymous')
+    status = payload.get('status', 'pending')
+    schedule = payload.get('schedule', '')
+    notes = payload.get('notes', '')
+    
+    try:
+        ensure_firebase()
+        
+        doc_ref = db.collection('schedules').document(date)
+        
+        # Update specific line data
+        doc_ref.set({
+            line: {
+                'status': status,
+                'schedule': schedule,
+                'notes': notes,
+                'updated_by': user,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            }
+        }, merge=True)
+        
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # -------- Static asset helpers for local dev -------- #
 @app.get('/')
 async def index():
