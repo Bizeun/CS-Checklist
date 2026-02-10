@@ -56,11 +56,12 @@ def create_nnd_checklist():
         ]
         add_items(proc, "통합", "H/W & 클리닝", integrated_items)
 
-        # 4-2. 탈리 비전 전용
-        tali_items = [
-            ("탈리비전 즉정지 알람 시 작업자 스크랩 조치 확인", "Verify Operator Scrap Action on Delamination Vision Stop Alarm")
-        ]
-        add_items(proc, "탈리(Delamination)", "H/W & 클리닝", tali_items)
+        # 4-2. 탈리 비전 전용 (음극에만)
+        if proc == "음극":
+            tali_items = [
+                ("탈리비전 즉정지 알람 시 작업자 스크랩 조치 확인", "Verify Operator Scrap Action on Delamination Vision Stop Alarm")
+            ]
+            add_items(proc, "탈리(Delamination)", "H/W & 클리닝", tali_items)
 
     # 데이터 쓰기
     for row in rows:

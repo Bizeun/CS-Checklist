@@ -14,3 +14,8 @@ firebase-credentials.json
 .csv
 CS_Checklist.xlsx
 .svg
+
+# Node modules & Tailwind
+node_modules/
+static/output.css
+package-lock.json

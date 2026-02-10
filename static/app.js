@@ -112,6 +112,7 @@ if (langBtn) {
         updateLangButton();
         populateFilters(); // Update filter labels
         renderChecklist();
+        updateScheduleModalLanguage(); // Update schedule modal language
     });
 }
 
@@ -293,7 +294,7 @@ async function submitChecklist(showAlert = true) {
 // Render Logic
 function renderChecklist() {
     if (checklistItems.length === 0) {
-        checklistDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No checklist items available.</p>';
+        checklistDiv.innerHTML = '<p class="text-center py-10 text-gray-500 text-lg">No checklist items available.</p>';
         return;
     }
     
@@ -364,7 +365,7 @@ function renderChecklist() {
     });
     
     if (filteredItems.length === 0) {
-        checklistDiv.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">No items match the selected filters.</p>';
+        checklistDiv.innerHTML = '<p class="text-center py-10 text-gray-500 text-lg">No items match the selected filters.</p>';
         updateStats([]);
         return;
     }
@@ -384,16 +385,14 @@ function renderChecklist() {
         if (checkedEntries.length > 0) {
             checkedByHtml = checkedEntries.map(([user, data]) => {
                 const timeStr = formatTime(data.timestamp); 
-                const noteDisplay = data.note ? `<span class="note-display">: ${escapeHtml(data.note)}</span>` : '';
+                const noteDisplay = data.note ? `<span class="text-gray-600">: ${escapeHtml(data.note)}</span>` : '';
                 return `
-                    <span class="checked-by">
+                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium mr-2">
                         ${escapeHtml(user)} ${timeStr}
                     </span>
-                    <span class="notes">
-                        ${escapeHtml(user)} ${noteDisplay}
-                    </span>
+                    ${data.note ? `<span class="text-sm text-gray-700">${escapeHtml(user)} ${noteDisplay}</span>` : ''}
                 `;
-            }).join(', ');
+            }).join('');
         }
         
         // Multi-language support for labels
@@ -432,15 +431,14 @@ function renderChecklist() {
             ? 'background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;' 
             : 'background-color: #f0f0f0; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;';
 
-        // Generate photo gallery HTML
+        // Generate photo gallery HTML (Tailwind CSS)
         let photoGalleryHtml = '';
         if (hasPhoto) {
-            photoGalleryHtml = '<div class="photo-gallery" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;">';
+            photoGalleryHtml = '<div class="flex flex-wrap gap-2 mt-3">';
             uploadedPhotos[item.id].forEach((photo, index) => {
                 photoGalleryHtml += `
                     <img src="${escapeHtml(photo.url)}" 
-                         class="photo-thumbnail" 
-                         style="max-width: 80px; max-height: 80px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; object-fit: cover;"
+                         class="w-20 h-20 rounded-lg border border-gray-300 cursor-pointer object-cover hover:scale-110 hover:shadow-lg transition-all" 
                          onclick="event.stopPropagation(); window.open('${escapeHtml(photo.url)}', '_blank')"
                          title="${escapeHtml(photo.filename || 'Photo ' + (index + 1))}"
                     />
@@ -455,30 +453,128 @@ function renderChecklist() {
         const notePlaceholder = currentLang === 'en' ? "Enter special issues or actions taken for issues" : "특이사항 혹은 문제 발생 시 조치 사항을 입력하세요";
 
             return `
-            <div class="checklist-item ${isChecked ? 'checked' : ''}" onclick="toggleCheck('${item.id}')">
-                <div class="checkbox"></div>
-                <div class="item-content">
-                    <div class="item-text">${escapeHtml(taskLabel)}</div>
-                    <div class="item-tags">
-                        <span class="tag tag-process ${processClass}">${escapeHtml(processLabel)}</span>
-                        <span class="tag tag-equipment">${escapeHtml(equipmentLabel)}</span>
-                        <span class="tag tag-category" style="background-color: #e0e0e0;">${escapeHtml(categoryLabel)}</span>
-                        <span class="tag tag-period">${escapeHtml(periodLabel)}</span>
+            <!-- Checklist Item (Tailwind CSS) -->
+            <div class="group relative flex items-start gap-4 p-5 bg-white rounded-xl border-2 ${isChecked ? 'border-green-400 bg-green-50' : 'border-gray-200'} hover:shadow-md transition-all duration-200 cursor-pointer" 
+                 onclick="toggleCheck('${item.id}')">
+                <!-- 
+                  체크리스트 아이템 스타일 설명:
+                  - group: 자식 요소에서 hover:group-hover 사용 가능
+                  - relative: 절대 위치 자식 요소 기준
+                  - flex items-start gap-4: flexbox, 위쪽 정렬, 간격 16px
+                  - p-5: padding 20px
+                  - bg-white: 배경 흰색
+                  - rounded-xl: border-radius 12px
+                  - border-2: 2px 테두리
+                  - border-green-400 bg-green-50 (체크됨): 초록색 테두리/배경
+                  - border-gray-200 (체크 안됨): 회색 테두리
+                  - hover:shadow-md: 호버 시 그림자
+                  - transition-all duration-200: 부드러운 전환
+                  - cursor-pointer: 클릭 커서
+                -->
+                
+                <!-- Checkbox -->
+                <div class="flex-shrink-0 mt-1 w-6 h-6 rounded-md border-2 ${isChecked ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'} flex items-center justify-center transition-all">
+                    ${isChecked ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                </div>
+                <!-- 
+                  체크박스 스타일 설명:
+                  - flex-shrink-0: 크기 유지 (줄어들지 않음)
+                  - mt-1: margin-top 4px (텍스트와 정렬)
+                  - w-6 h-6: 24px x 24px
+                  - rounded-md: 모서리 둥글게
+                  - border-2: 2px 테두리
+                  - bg-green-500 border-green-500 (체크됨): 초록색
+                  - bg-white border-gray-300 (안 됨): 흰색/회색
+                  - flex items-center justify-center: 체크마크 중앙 정렬
+                -->
+                
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                    <!-- Task Title -->
+                    <div class="text-lg font-semibold text-gray-800 mb-2 ${isChecked ? 'line-through text-gray-500' : ''}">${escapeHtml(taskLabel)}</div>
+                    <!-- 
+                      - text-lg: font-size 1.125rem
+                      - font-semibold: font-weight 600
+                      - text-gray-800: 진한 회색
+                      - mb-2: margin-bottom 8px
+                      - line-through text-gray-500 (체크됨): 취소선, 연한 회색
+                    -->
+                    
+                    <!-- Tags -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        ${processClass === 'cathode' ? 
+                            `<span class="inline-flex items-center justify-center px-3 py-1 text-xs font-bold text-white rounded-full bg-gradient-to-r from-cathode-light to-cathode-dark border-[3px] border-cathode-border shadow-sm">${escapeHtml(processLabel)}</span>` :
+                          processClass === 'anode' ?
+                            `<span class="inline-flex items-center justify-center px-3 py-1 text-xs font-bold text-white rounded-full bg-gradient-to-r from-anode-light to-anode-dark border-[3px] border-anode-border shadow-sm">${escapeHtml(processLabel)}</span>` :
+                            `<span class="inline-flex items-center justify-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">${escapeHtml(processLabel)}</span>`
+                        }
+                        <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-medium text-pink-700 bg-pink-100 rounded-full">${escapeHtml(equipmentLabel)}</span>
+                        <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded-full">${escapeHtml(categoryLabel)}</span>
+                        <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">${escapeHtml(periodLabel)}</span>
                     </div>
+                    <!-- 
+                      태그 스타일 설명:
+                      - inline-flex items-center justify-center: 인라인 flexbox, 텍스트 중앙 정렬
+                      - px-3 py-1: padding 좌우 12px, 상하 4px
+                      - text-xs: font-size 0.75rem
+                      - font-medium/bold: 폰트 굵기
+                      - rounded-full: 완전히 둥근 모서리
+                      - bg-gradient-to-r from-X to-Y: 그라데이션 (음극/양극)
+                      - border-[3px]: 3px 테두리 (음극/양극)
+                      - text-X bg-X: 색상 조합
+                    -->
+                    
+                    <!-- Checked By -->
                     ${checkedByHtml.length > 0 ? `
-                        <div class="item-meta">
+                        <div class="flex flex-wrap gap-2 mb-3 text-sm">
                             ${checkedByHtml}
                         </div>
                     ` : ''}
                     
-                    <div class="item-actions" onclick="event.stopPropagation();">
-                        <button type="button" class="action-btn" style="${photoBtnStyle} margin-right: 8px;" onclick="triggerPhotoUpload('${item.id}')">
-                            ${photoBtnText}
-                        </button>
-                        <button type="button" class="action-btn" onclick="toggleNoteBox('${item.id}')">
-                            ${noteBtnText}
-                        </button>
-                        <textarea id="${noteInputId}" class="item-note-input" rows="3" style="display: ${noteDisplay};" placeholder="${notePlaceholder}" onblur="updateItemNote('${item.id}', this.value)" onclick="event.stopPropagation();">${escapeHtml(existingNote)}</textarea>
+                    <!-- Actions -->
+                    <div class="mt-3 space-y-2" onclick="event.stopPropagation();">
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" 
+                                    class="px-4 py-2 text-sm font-medium rounded-lg transition-all hover:scale-105 active:scale-95 ${hasPhoto ? 'bg-green-500 text-white border-none hover:bg-green-600' : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'}" 
+                                    onclick="triggerPhotoUpload('${item.id}')">
+                                ${photoBtnText}
+                            </button>
+                            <button type="button" 
+                                    class="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition-all hover:scale-105 active:scale-95" 
+                                    onclick="toggleNoteBox('${item.id}')">
+                                ${noteBtnText}
+                            </button>
+                        </div>
+                        <!-- 
+                          버튼 스타일 설명:
+                          - px-4 py-2: padding 좌우 16px, 상하 8px
+                          - text-sm font-medium: 작은 텍스트, 중간 굵기
+                          - rounded-lg: 둥근 모서리
+                          - hover:scale-105: 호버 시 1.05배 확대
+                          - active:scale-95: 클릭 시 0.95배 축소
+                          - transition-all: 부드러운 전환
+                        -->
+                        <textarea id="${noteInputId}" 
+                                  class="w-full min-h-[80px] p-3 text-sm border-2 border-gray-200 rounded-lg resize-y bg-gray-50 focus:outline-none focus:border-brand-purple focus:bg-white transition-all" 
+                                  rows="3" 
+                                  style="display: ${noteDisplay};" 
+                                  placeholder="${notePlaceholder}" 
+                                  onblur="updateItemNote('${item.id}', this.value)" 
+                                  onclick="event.stopPropagation();">${escapeHtml(existingNote)}</textarea>
+                        <!-- 
+                          Textarea 스타일 설명:
+                          - w-full: width 100%
+                          - min-h-[80px]: 최소 높이 80px
+                          - p-3: padding 12px
+                          - text-sm: 작은 텍스트
+                          - border-2 border-gray-200: 2px 회색 테두리
+                          - rounded-lg: 둥근 모서리
+                          - resize-y: 세로만 크기 조절 가능
+                          - bg-gray-50: 연한 회색 배경
+                          - focus:outline-none: 포커스 시 기본 아웃라인 제거
+                          - focus:border-brand-purple: 포커스 시 보라색 테두리
+                          - focus:bg-white: 포커스 시 흰색 배경
+                        -->
                         ${photoGalleryHtml}
                     </div>
                 </div>
@@ -500,24 +596,26 @@ function updateStats(visibleItems) {
 }
 
 function showLoading() {
-    loadingDiv.style.display = 'block';
-    checklistContainer.style.display = 'none';
-    errorDiv.style.display = 'none';
+    loadingDiv.classList.remove('hidden');
+    loadingDiv.classList.add('flex');
+    checklistContainer.classList.add('hidden');
+    errorDiv.classList.add('hidden');
 }
 
 function hideLoading() {
-    loadingDiv.style.display = 'none';
-    checklistContainer.style.display = 'block';
+    loadingDiv.classList.add('hidden');
+    loadingDiv.classList.remove('flex');
+    checklistContainer.classList.remove('hidden');
 }
 
 function showError(message) {
-    errorDiv.style.display = 'block';
+    errorDiv.classList.remove('hidden');
     document.getElementById('error-message').textContent = message;
-    checklistContainer.style.display = 'none';
+    checklistContainer.classList.add('hidden');
 }
 
 function hideError() {
-    errorDiv.style.display = 'none';
+    errorDiv.classList.add('hidden');
 }
 
 function escapeHtml(text) {
@@ -828,18 +926,18 @@ async function loadSchedule() {
                 const time = formatTime(lineData.updated_at);
                 lastUpdateEl.textContent = `${lineData.updated_by} ${time}`;
             } else {
-                lastUpdateEl.textContent = '수정 기록 없음';
+                lastUpdateEl.textContent = currentLang === 'kr' ? '수정 기록 없음' : 'No modifications';
             }
         });
     } catch (error) {
         console.error('Error loading schedule:', error);
-        alert('일정을 불러오는데 실패했습니다.');
+        alert(currentLang === 'kr' ? '일정을 불러오는데 실패했습니다.' : 'Failed to load schedule.');
     }
 }
 
 async function saveLineSchedule(line) {
     if (!currentUser || currentUser.trim() === '') {
-        alert('이름을 먼저 입력해주세요!');
+        alert(currentLang === 'kr' ? '이름을 먼저 입력해주세요!' : 'Please enter your name first!');
         userInput.focus();
         return;
     }
@@ -866,19 +964,85 @@ async function saveLineSchedule(line) {
         const result = await response.json();
         
         if (result.success) {
-            alert(`${line} 일정이 저장되었습니다!`);
+            const msg = currentLang === 'kr' ? `${line} 일정이 저장되었습니다!` : `${line} schedule saved successfully!`;
+            alert(msg);
             loadSchedule(); // Reload to show updated info
         } else {
             throw new Error(result.error || 'Save failed');
         }
     } catch (error) {
         console.error('Error saving schedule:', error);
-        alert('일정 저장에 실패했습니다: ' + error.message);
+        const msg = currentLang === 'kr' ? '일정 저장에 실패했습니다: ' : 'Failed to save schedule: ';
+        alert(msg + error.message);
     }
 }
 
 // Make function available globally
 window.saveLineSchedule = saveLineSchedule;
+
+// Translation function for schedule modal
+function updateScheduleModalLanguage() {
+    const lang = currentLang;
+    
+    // Schedule button text
+    const scheduleBtn = document.getElementById('schedule-btn');
+    if (scheduleBtn) {
+        scheduleBtn.textContent = lang === 'kr' ? '📅 오늘 생산 일정표' : '📅 Today\'s Production Schedule';
+    }
+    
+    // Modal title
+    const modalTitle = document.getElementById('schedule-modal-title');
+    if (modalTitle) {
+        modalTitle.textContent = lang === 'kr' ? '📅 라인별 생산 일정' : '📅 Production Schedule by Line';
+    }
+    
+    // Labels
+    document.querySelectorAll('.schedule-label').forEach(el => {
+        el.textContent = lang === 'kr' ? '생산 일정:' : 'Production Schedule:';
+    });
+    
+    document.querySelectorAll('.notes-label').forEach(el => {
+        el.textContent = lang === 'kr' ? '특이사항/메모:' : 'Notes/Remarks:';
+    });
+    
+    document.querySelectorAll('.log-label').forEach(el => {
+        el.textContent = lang === 'kr' ? '📝 수정 기록' : '📝 Modification Log';
+    });
+    
+    // Save buttons
+    document.querySelectorAll('.save-schedule-btn').forEach(el => {
+        el.textContent = lang === 'kr' ? '저장' : 'Save';
+    });
+    
+    // Status select options
+    document.querySelectorAll('.status-select option').forEach(option => {
+        const value = option.value;
+        if (value === 'pending') {
+            option.textContent = lang === 'kr' ? '대기중' : 'Pending';
+        } else if (value === 'in_progress') {
+            option.textContent = lang === 'kr' ? '진행중' : 'In Progress';
+        } else if (value === 'completed') {
+            option.textContent = lang === 'kr' ? '완료' : 'Completed';
+        }
+    });
+    
+    // Placeholders
+    document.querySelectorAll('.schedule-input').forEach(el => {
+        el.placeholder = lang === 'kr' ? '예: 양극 2호기 점검 14:00' : 'e.g.: Line #2 Cathode Inspection 14:00';
+    });
+    
+    document.querySelectorAll('.notes-input').forEach(el => {
+        el.placeholder = lang === 'kr' ? '특이사항 입력...' : 'Enter notes...';
+    });
+    
+    // Update "no modification" text
+    ['line1', 'line2', 'line3', 'line4'].forEach(line => {
+        const lastUpdateEl = document.getElementById(`${line}-last-update`);
+        if (lastUpdateEl && (lastUpdateEl.textContent.includes('수정 기록 없음') || lastUpdateEl.textContent.includes('No modifications'))) {
+            lastUpdateEl.textContent = lang === 'kr' ? '수정 기록 없음' : 'No modifications';
+        }
+    });
+}
 
 // Schedule modal event listeners
 document.addEventListener('DOMContentLoaded', () => {
@@ -888,24 +1052,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (scheduleBtn) {
         scheduleBtn.addEventListener('click', () => {
-            scheduleModal.style.display = 'block';
+            scheduleModal.classList.remove('hidden');
+            scheduleModal.classList.add('flex');
             loadSchedule();
+            updateScheduleModalLanguage();
         });
     }
     
     if (closeSchedule) {
         closeSchedule.addEventListener('click', () => {
-            scheduleModal.style.display = 'none';
+            scheduleModal.classList.add('hidden');
+            scheduleModal.classList.remove('flex');
         });
     }
     
     // Close modal when clicking outside
     window.addEventListener('click', (event) => {
         if (event.target === scheduleModal) {
-            scheduleModal.style.display = 'none';
+            scheduleModal.classList.add('hidden');
+            scheduleModal.classList.remove('flex');
         }
     });
 });
 
 // Load initial checklist
 loadChecklist();
+
+// Initialize schedule modal language on page load
+updateScheduleModalLanguage();

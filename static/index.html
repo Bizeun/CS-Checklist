@@ -4,217 +4,475 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Checklist</title>
-    <link rel="stylesheet" href="styles.css">
+    <!-- Tailwind CSS (완전히 마이그레이션 완료!) -->
+    <link rel="stylesheet" href="output.css">
     <link rel="icon" href="./symbol_ci.svg" type="image/svg+xml">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <img src="./lges.png" alt="Logo" height="50" class="header-logo">
-            <h1>CS Checklist - Daily Tracking</h1>
-            <div class="header-controls">
-                <div class="date-selector">
-                    <label for="date-input">Date:</label>
-                    <input type="date" id="date-input" value="">
+<body class="bg-gradient-to-br from-brand-purple to-brand-purple-dark min-h-screen p-5 text-gray-800">
+    <!-- 
+      Tailwind 클래스 설명:
+      - bg-gradient-to-br: 배경 그라데이션 (왼쪽 위 → 오른쪽 아래)
+      - from-brand-purple to-brand-purple-dark: 보라색 그라데이션 (config에서 정의)
+      - min-h-screen: 최소 높이 100vh
+      - p-5: padding 20px (1.25rem)
+      - text-gray-800: 기본 텍스트 색상 (#333에 가까움)
+    -->
+    <div class="max-w-screen-xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <!-- 
+      Tailwind 클래스 설명:
+      - max-w-screen-xl: 최대 너비 1280px (1200px 대신 더 표준적인 크기)
+      - mx-auto: margin: 0 auto (가로 중앙 정렬)
+      - bg-white: 배경 흰색
+      - rounded-2xl: border-radius 16px
+      - shadow-2xl: box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) (더 강한 그림자)
+      - overflow-hidden: 자식 요소가 border-radius를 벗어나지 않도록
+    -->
+        <header class="bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white p-8 text-center">
+            <!-- 
+              Tailwind 클래스 설명:
+              - bg-gradient-to-r: 좌 → 우 그라데이션
+              - from-brand-purple to-brand-purple-dark: 커스텀 보라색 그라데이션
+              - text-white: 텍스트 흰색
+              - p-8: padding 32px (30px에 가까움)
+              - text-center: 텍스트 가운데 정렬
+            -->
+            <img src="./lges.png" alt="Logo" class="block mx-auto mb-4 max-h-12 h-auto max-w-full md:max-h-[50px]">
+            <!-- 
+              Tailwind 클래스 설명:
+              - block: display: block
+              - mx-auto: margin 가로 중앙
+              - mb-4: margin-bottom 16px
+              - max-h-12: max-height 48px (모바일)
+              - h-auto: height auto (비율 유지)
+              - max-w-full: max-width 100% (화면 벗어나지 않음)
+              - md:max-h-[50px]: 중간 화면 이상에서 max-height 50px
+            -->
+            <h1 class="text-4xl font-bold mb-5">CS Checklist - Daily Tracking</h1>
+            <!-- 
+              Tailwind 클래스 설명:
+              - text-4xl: font-size 2.25rem (대략 36px, 원래 2.5em에 가까움)
+              - font-bold: font-weight 700
+              - mb-5: margin-bottom 20px
+            -->
+            <div class="flex flex-wrap justify-center gap-5 mt-5">
+                <!-- 
+                  Tailwind 클래스 설명:
+                  - flex: display flex
+                  - flex-wrap: flex-wrap (줄바꿈 허용)
+                  - justify-center: 가로 중앙 정렬
+                  - gap-5: gap 20px (요소 간 간격)
+                  - mt-5: margin-top 20px
+                -->
+                <div class="flex flex-col gap-2">
+                    <label for="date-input" class="font-medium text-sm">Date:</label>
+                    <input type="date" id="date-input" value="" 
+                           class="px-4 py-2 rounded-lg border-2 border-white/20 bg-white/10 text-white placeholder-white/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-white/50 transition-all">
+                    <!-- 
+                      Input 스타일 설명:
+                      - px-4 py-2: padding 좌우 16px, 상하 8px
+                      - rounded-lg: border-radius 8px
+                      - border-2 border-white/20: 2px 흰색 20% 투명도 테두리
+                      - bg-white/10: 배경 흰색 10% 투명도
+                      - text-white: 텍스트 흰색
+                      - backdrop-blur-md: 블러 효과
+                      - focus:outline-none: 포커스 시 기본 아웃라인 제거
+                      - focus:ring-2 focus:ring-white/50: 포커스 시 링 효과
+                      - transition-all: 모든 속성 부드럽게 전환
+                    -->
                 </div>
-                <div class="user-selector">
-                    <label for="user-input">Name:</label>
-                    <input type="text" id="user-input" placeholder="Enter name" value="">
+                <div class="flex flex-col gap-2">
+                    <label for="user-input" class="font-medium text-sm">Name:</label>
+                    <input type="text" id="user-input" placeholder="Enter name" value=""
+                           class="px-4 py-2 rounded-lg border-2 border-white/20 bg-white/10 text-white placeholder-white/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-white/50 transition-all">
                 </div>
-                <div class="lang-selector">
-                    <button id="lang-btn" class="lang-btn">🇺🇸 EN</button>
+                <div class="flex flex-col gap-2">
+                    <label class="font-medium text-sm invisible">Lang:</label>
+                    <!-- invisible label로 높이 맞춤 -->
+                    <button id="lang-btn" 
+                            class="px-6 py-2 rounded-lg border-2 border-white/30 bg-white/20 text-white font-semibold backdrop-blur-md hover:bg-white/30 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                        🇺🇸 EN
+                    </button>
+                    <!-- 
+                      Button 스타일 설명:
+                      - hover:bg-white/30: 호버 시 배경 더 밝게
+                      - hover:scale-105: 호버 시 1.05배 확대
+                      - active:scale-95: 클릭 시 0.95배 축소
+                      - cursor-pointer: 포인터 커서
+                    -->
                 </div>
             </div>
-            <div class="filter-controls">
-                <div class="filter">
-                    <label for="line-input">Line</label>
-                    <select id="line-input">
-                        <option value="Line1">Line #1</option>
-                        <option value="Line2">Line #2</option>
-                        <option value="Line3">Line #3</option>
-                        <option value="Line4">Line #4</option>
+            <div class="mt-6 flex flex-wrap justify-center gap-4">
+                <!-- 
+                  필터 컨트롤 Tailwind 설명:
+                  - mt-6: margin-top 24px (25px에 가까움)
+                  - flex flex-wrap: 반응형 레이아웃
+                  - justify-center: 가로 중앙 정렬
+                  - gap-4: 요소 간 간격 16px
+                -->
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label for="line-input" class="font-medium text-sm">Line</label>
+                    <select id="line-input" 
+                            class="px-3 py-2 rounded-lg border-none bg-white/25 text-white text-sm backdrop-blur-md cursor-pointer hover:bg-white/35 transition-colors">
+                        <!-- 
+                          Select 스타일 설명:
+                          - px-3 py-2: padding 좌우 12px, 상하 8px
+                          - rounded-lg: border-radius 8px
+                          - border-none: border 없음
+                          - bg-white/25: 배경 흰색 25% 투명도
+                          - text-white: 텍스트 흰색
+                          - text-sm: font-size 0.875rem (0.95em에 가까움)
+                          - backdrop-blur-md: 블러 효과
+                          - cursor-pointer: 포인터 커서
+                          - hover:bg-white/35: 호버 시 배경 더 밝게
+                          - transition-colors: 색상 전환 애니메이션
+                        -->
+                        <option value="Line1" class="text-gray-800">Line #1</option>
+                        <option value="Line2" class="text-gray-800">Line #2</option>
+                        <option value="Line3" class="text-gray-800">Line #3</option>
+                        <option value="Line4" class="text-gray-800">Line #4</option>
                     </select>
                 </div>
-                <div class="filter">
-                    <label for="filter-process">Process</label>
-                    <select id="filter-process">
-                        <option value="all">All Processes</option>
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label for="filter-process" class="font-medium text-sm">Process</label>
+                    <select id="filter-process" 
+                            class="px-3 py-2 rounded-lg border-none bg-white/25 text-white text-sm backdrop-blur-md cursor-pointer hover:bg-white/35 transition-colors">
+                        <option value="all" class="text-gray-800">All Processes</option>
                     </select>
                 </div>
-                <div class="filter">
-                    <label for="filter-equipment">Vision Type</label>
-                    <select id="filter-equipment">
-                        <option value="all">All Types</option>
-                        <!-- Added explicitly to ensure they appear in filters even if empty -->
-                        <option value="통합">Integrated (통합)</option>
-                        <option value="NG">NG</option>
-                        <option value="포일">Foil (포일)</option>
-                        <option value="탈리">Tali (탈리)</option>
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label for="filter-equipment" class="font-medium text-sm">Vision Type</label>
+                    <select id="filter-equipment" 
+                            class="px-3 py-2 rounded-lg border-none bg-white/25 text-white text-sm backdrop-blur-md cursor-pointer hover:bg-white/35 transition-colors">
+                        <option value="all" class="text-gray-800">All Types</option>
+                        <option value="통합" class="text-gray-800">Integrated (통합)</option>
+                        <option value="NG" class="text-gray-800">NG</option>
+                        <option value="포일" class="text-gray-800">Foil (포일)</option>
+                        <option value="탈리" class="text-gray-800">Tali (탈리)</option>
                     </select>
                 </div>
-                <div class="filter">
-                    <label for="filter-category">Category</label>
-                    <select id="filter-category">
-                        <option value="all">All Categories</option>
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label for="filter-category" class="font-medium text-sm">Category</label>
+                    <select id="filter-category" 
+                            class="px-3 py-2 rounded-lg border-none bg-white/25 text-white text-sm backdrop-blur-md cursor-pointer hover:bg-white/35 transition-colors">
+                        <option value="all" class="text-gray-800">All Categories</option>
                     </select>
                 </div>
-                <div class="filter">
-                    <label for="filter-period">Frequency</label>
-                    <select id="filter-period">
-                        <option value="all">All Frequencies</option>
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label for="filter-period" class="font-medium text-sm">Frequency</label>
+                    <select id="filter-period" 
+                            class="px-3 py-2 rounded-lg border-none bg-white/25 text-white text-sm backdrop-blur-md cursor-pointer hover:bg-white/35 transition-colors">
+                        <option value="all" class="text-gray-800">All Frequencies</option>
                     </select>
                 </div>
             </div>
         </header>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Loading checklist...</p>
+        <!-- Loading Screen -->
+        <div id="loading" class="flex flex-col items-center justify-center min-h-[400px] bg-gradient-to-br from-purple-400 via-pink-400 to-purple-500">
+            <!-- 
+              Loading 스타일 설명:
+              - flex flex-col: 세로 방향 flexbox
+              - items-center justify-center: 가로/세로 중앙 정렬
+              - min-h-[400px]: 최소 높이 400px
+              - bg-gradient-to-br from-purple-400 via-pink-400 to-purple-500: 그라데이션 배경
+            -->
+            <div class="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <!-- 
+              Spinner 스타일 설명:
+              - w-16 h-16: 64px x 64px 크기
+              - border-4: 4px 테두리
+              - border-white/30: 흰색 30% 투명도
+              - border-t-white: 상단만 흰색 (회전 효과)
+              - rounded-full: 완전한 원
+              - animate-spin: 회전 애니메이션
+            -->
+            <p class="mt-6 text-white text-xl font-semibold animate-pulse-slow">Loading checklist...</p>
+            <!-- 
+              - mt-6: margin-top 24px
+              - text-white text-xl: 흰색, 크기 1.25rem
+              - font-semibold: font-weight 600
+              - animate-pulse-slow: 천천히 깜빡이는 애니메이션 (config에서 정의)
+            -->
         </div>
 
-        <div class="error" id="error" style="display: none;">
-            <p id="error-message"></p>
+        <!-- Error Message -->
+        <div id="error" class="hidden p-8 text-center">
+            <p id="error-message" class="text-red-600 text-lg font-medium"></p>
         </div>
 
-        <div class="checklist-container" id="checklist-container" style="display: none;">
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-label">Total Items:</span>
-                    <span class="stat-value" id="total-items">0</span>
+        <!-- Main Checklist Container -->
+        <div id="checklist-container" class="hidden p-8">
+            <!-- 
+              - hidden: display none (JS에서 보이기/숨기기 제어)
+              - p-8: padding 32px
+            -->
+            
+            <!-- Stats Section -->
+            <div class="flex flex-wrap justify-center gap-6 mb-8 p-6 bg-gradient-to-r from-brand-purple/10 to-brand-purple-dark/10 rounded-xl border border-brand-purple/20">
+                <!-- 
+                  Stats 스타일 설명:
+                  - flex flex-wrap justify-center gap-6: 반응형 flexbox, 간격 24px
+                  - mb-8: margin-bottom 32px
+                  - p-6: padding 24px
+                  - bg-gradient-to-r from-brand-purple/10 to-brand-purple-dark/10: 연한 그라데이션 배경
+                  - rounded-xl: border-radius 12px
+                  - border border-brand-purple/20: 연한 보라색 테두리
+                -->
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-sm font-medium text-gray-600">Total Items:</span>
+                    <span id="total-items" class="text-3xl font-bold text-brand-purple">0</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Checked:</span>
-                    <span class="stat-value" id="checked-count">0</span>
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-sm font-medium text-gray-600">Checked:</span>
+                    <span id="checked-count" class="text-3xl font-bold text-green-600">0</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Progress:</span>
-                    <span class="stat-value" id="progress">0%</span>
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-sm font-medium text-gray-600">Progress:</span>
+                    <span id="progress" class="text-3xl font-bold text-brand-purple-dark">0%</span>
                 </div>
             </div>
 
-            <div class="buttons">
-                <div class="submit-btn">
-                    <button id="schedule-btn" class="schedule-btn">📅 오늘 생산 일정표</button>
-                </div>
-                <div class="submit-btn">
-                    <button id="submit-btn" class="submit-btn">Submit Checklist</button>
-                </div>
-                <div class="submit-btn"> 
-                    <button id="summary-btn" class="summary-btn">View Summary</button> 
-                </div>
-                <div class="submit-btn"> 
-                    <button id="download-btn" class="download-btn">Download Checklist</button> 
-                </div>
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <!-- 
+                  Buttons 스타일 설명:
+                  - flex flex-wrap justify-center gap-4: 반응형 버튼 레이아웃
+                  - mb-8: margin-bottom 32px
+                -->
+                <button id="schedule-btn" 
+                        class="px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                    📅 오늘 생산 일정표
+                </button>
+                <!-- 
+                  Button 스타일 설명:
+                  - px-6 py-3: padding 좌우 24px, 상하 12px
+                  - bg-gradient-to-r from-brand-purple to-brand-purple-dark: 그라데이션 배경
+                  - text-white font-semibold: 흰색 텍스트, 두껍게
+                  - rounded-lg shadow-lg: 둥근 모서리, 그림자
+                  - hover:shadow-xl: 호버 시 그림자 더 크게
+                  - hover:-translate-y-0.5: 호버 시 위로 2px 이동
+                  - active:translate-y-0: 클릭 시 원위치
+                  - transition-all duration-200: 모든 애니메이션 200ms
+                -->
+                <button id="submit-btn" 
+                        class="px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                    Submit Checklist
+                </button>
+                <button id="summary-btn" 
+                        class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                    View Summary
+                </button>
+                <button id="download-btn" 
+                        class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                    Download Checklist
+                </button>
             </div>
 
-            <div class="checklist" id="checklist">
-                <!-- Checklist items will be loaded here -->
+            <!-- Checklist Items Container -->
+            <div id="checklist" class="space-y-4">
+                <!-- 
+                  Checklist 스타일 설명:
+                  - space-y-4: 자식 요소들 간 세로 간격 16px
+                  체크리스트 아이템은 JavaScript (app.js)에서 동적으로 생성됩니다
+                -->
+                <!-- Checklist items will be loaded here by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Production Schedule Modal -->
-    <div id="schedule-modal" class="modal" style="display: none;">
-        <div class="modal-content schedule-modal-content">
-            <div class="modal-header">
-                <h2>📅 라인별 생산 일정</h2>
-                <span class="close-schedule" style="cursor: pointer; font-size: 28px;">&times;</span>
+    <!-- Production Schedule Modal (Tailwind CSS) -->
+    <div id="schedule-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <!-- 
+          모달 오버레이 스타일 설명:
+          - hidden: 초기 숨김 상태 (JS로 제어)
+          - fixed inset-0: 전체 화면 고정 위치
+          - bg-black/50: 검은색 50% 투명도
+          - backdrop-blur-sm: 배경 흐림 효과
+          - z-50: 다른 요소 위에 표시
+          - flex items-center justify-center: 중앙 정렬
+          - p-4: padding 16px (모바일에서 여백)
+        -->
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <!-- 
+              모달 컨테이너 스타일 설명:
+              - bg-white: 흰색 배경
+              - rounded-2xl: 큰 둥근 모서리 (16px)
+              - shadow-2xl: 강한 그림자
+              - max-w-4xl: 최대 너비 896px
+              - w-full: 너비 100% (max-w 내에서)
+              - max-h-[90vh]: 최대 높이 화면의 90%
+              - overflow-hidden: 내용 넘침 숨김
+            -->
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-brand-purple/10 to-brand-purple-dark/10">
+                <h2 id="schedule-modal-title" class="text-2xl font-bold text-gray-800">📅 라인별 생산 일정</h2>
+                <button class="close-schedule text-4xl text-gray-400 hover:text-gray-600 transition-colors cursor-pointer leading-none">&times;</button>
             </div>
-            <div class="modal-body">
+            
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)] space-y-6">
+                <!-- 
+                  Modal Body 스타일 설명:
+                  - p-6: padding 24px
+                  - overflow-y-auto: 세로 스크롤 가능
+                  - max-h-[calc(90vh-80px)]: 최대 높이 계산 (헤더 제외)
+                  - space-y-6: 자식 요소 간 세로 간격 24px
+                -->
                 <!-- Line 1 -->
-                <div class="schedule-line">
-                    <div class="schedule-line-header">
-                        <h3>Line #1</h3>
-                        <select id="line1-status" class="status-select">
-                            <option value="pending">대기중</option>
-                            <option value="in_progress">진행중</option>
-                            <option value="completed">완료</option>
+                <div class="p-6 border-2 border-gray-200 rounded-xl hover:border-brand-purple/50 hover:shadow-lg transition-all bg-gradient-to-br from-white to-gray-50">
+                    <!-- 
+                      라인 카드 스타일 설명:
+                      - p-6: padding 24px
+                      - border-2 border-gray-200: 2px 회색 테두리
+                      - rounded-xl: 큰 둥근 모서리
+                      - hover:border-brand-purple/50: 호버 시 보라색 테두리
+                      - hover:shadow-lg: 호버 시 그림자
+                      - transition-all: 부드러운 전환
+                      - bg-gradient-to-br from-white to-gray-50: 연한 그라데이션
+                    -->
+                    
+                    <!-- Header with Title and Status -->
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800">Line #1</h3>
+                        <select id="line1-status" 
+                                class="px-4 py-2 border-2 border-gray-300 rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all cursor-pointer bg-white">
+                            <option value="pending" data-ko="대기중" data-en="Pending">대기중</option>
+                            <option value="in_progress" data-ko="진행중" data-en="In Progress">진행중</option>
+                            <option value="completed" data-ko="완료" data-en="Completed">완료</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>생산 일정:</label>
-                        <input type="text" id="line1-schedule" placeholder="예: 양극 2호기 점검 14:00">
+                    
+                    <!-- Schedule Input -->
+                    <div class="mb-4">
+                        <label class="schedule-label block text-sm font-semibold text-gray-700 mb-2">생산 일정:</label>
+                        <input type="text" 
+                               id="line1-schedule" 
+                               placeholder="예: 양극 2호기 점검 14:00" 
+                               class="schedule-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all">
                     </div>
-                    <div class="form-group">
-                        <label>특이사항/메모:</label>
-                        <textarea id="line1-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    
+                    <!-- Notes Textarea -->
+                    <div class="mb-4">
+                        <label class="notes-label block text-sm font-semibold text-gray-700 mb-2">특이사항/메모:</label>
+                        <textarea id="line1-notes" 
+                                  rows="2" 
+                                  placeholder="특이사항 입력..." 
+                                  class="notes-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all min-h-[60px]"></textarea>
                     </div>
-                    <div class="last-update">
-                        <span id="line1-last-update">수정 기록 없음</span>
+                    
+                    <!-- Modification Log -->
+                    <div class="mb-4 p-4 bg-gray-50 border-l-4 border-brand-purple rounded-lg">
+                        <label class="log-label block text-sm font-semibold text-gray-700 mb-2">📝 수정 기록</label>
+                        <div class="p-3 bg-white rounded-md">
+                            <span id="line1-last-update" class="text-sm text-gray-600">수정 기록 없음</span>
+                        </div>
                     </div>
-                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line1')">저장</button>
+                    
+                    <!-- Save Button -->
+                    <button onclick="saveLineSchedule('Line1')" 
+                            class="w-full px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                        저장
+                    </button>
                 </div>
 
                 <!-- Line 2 -->
-                <div class="schedule-line">
-                    <div class="schedule-line-header">
-                        <h3>Line #2</h3>
-                        <select id="line2-status" class="status-select">
-                            <option value="pending">대기중</option>
-                            <option value="in_progress">진행중</option>
-                            <option value="completed">완료</option>
+                <div class="p-6 border-2 border-gray-200 rounded-xl hover:border-brand-purple/50 hover:shadow-lg transition-all bg-gradient-to-br from-white to-gray-50">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800">Line #2</h3>
+                        <select id="line2-status" 
+                                class="px-4 py-2 border-2 border-gray-300 rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all cursor-pointer bg-white">
+                            <option value="pending" data-ko="대기중" data-en="Pending">대기중</option>
+                            <option value="in_progress" data-ko="진행중" data-en="In Progress">진행중</option>
+                            <option value="completed" data-ko="완료" data-en="Completed">완료</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>생산 일정:</label>
-                        <input type="text" id="line2-schedule" placeholder="예: 음극 1호기 A-Lot">
+                    <div class="mb-4">
+                        <label class="schedule-label block text-sm font-semibold text-gray-700 mb-2">생산 일정:</label>
+                        <input type="text" id="line2-schedule" placeholder="예: 음극 1호기 A-Lot" 
+                               class="schedule-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all">
                     </div>
-                    <div class="form-group">
-                        <label>특이사항/메모:</label>
-                        <textarea id="line2-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    <div class="mb-4">
+                        <label class="notes-label block text-sm font-semibold text-gray-700 mb-2">특이사항/메모:</label>
+                        <textarea id="line2-notes" rows="2" placeholder="특이사항 입력..." 
+                                  class="notes-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all min-h-[60px]"></textarea>
                     </div>
-                    <div class="last-update">
-                        <span id="line2-last-update">수정 기록 없음</span>
+                    <div class="mb-4 p-4 bg-gray-50 border-l-4 border-brand-purple rounded-lg">
+                        <label class="log-label block text-sm font-semibold text-gray-700 mb-2">📝 수정 기록</label>
+                        <div class="p-3 bg-white rounded-md">
+                            <span id="line2-last-update" class="text-sm text-gray-600">수정 기록 없음</span>
+                        </div>
                     </div>
-                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line2')">저장</button>
+                    <button onclick="saveLineSchedule('Line2')" 
+                            class="w-full px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                        저장
+                    </button>
                 </div>
 
                 <!-- Line 3 -->
-                <div class="schedule-line">
-                    <div class="schedule-line-header">
-                        <h3>Line #3</h3>
-                        <select id="line3-status" class="status-select">
-                            <option value="pending">대기중</option>
-                            <option value="in_progress">진행중</option>
-                            <option value="completed">완료</option>
+                <div class="p-6 border-2 border-gray-200 rounded-xl hover:border-brand-purple/50 hover:shadow-lg transition-all bg-gradient-to-br from-white to-gray-50">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800">Line #3</h3>
+                        <select id="line3-status" 
+                                class="px-4 py-2 border-2 border-gray-300 rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all cursor-pointer bg-white">
+                            <option value="pending" data-ko="대기중" data-en="Pending">대기중</option>
+                            <option value="in_progress" data-ko="진행중" data-en="In Progress">진행중</option>
+                            <option value="completed" data-ko="완료" data-en="Completed">완료</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>생산 일정:</label>
-                        <input type="text" id="line3-schedule" placeholder="예: 설비 점검 예정">
+                    <div class="mb-4">
+                        <label class="schedule-label block text-sm font-semibold text-gray-700 mb-2">생산 일정:</label>
+                        <input type="text" id="line3-schedule" placeholder="예: 설비 점검 예정" 
+                               class="schedule-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all">
                     </div>
-                    <div class="form-group">
-                        <label>특이사항/메모:</label>
-                        <textarea id="line3-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    <div class="mb-4">
+                        <label class="notes-label block text-sm font-semibold text-gray-700 mb-2">특이사항/메모:</label>
+                        <textarea id="line3-notes" rows="2" placeholder="특이사항 입력..." 
+                                  class="notes-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all min-h-[60px]"></textarea>
                     </div>
-                    <div class="last-update">
-                        <span id="line3-last-update">수정 기록 없음</span>
+                    <div class="mb-4 p-4 bg-gray-50 border-l-4 border-brand-purple rounded-lg">
+                        <label class="log-label block text-sm font-semibold text-gray-700 mb-2">📝 수정 기록</label>
+                        <div class="p-3 bg-white rounded-md">
+                            <span id="line3-last-update" class="text-sm text-gray-600">수정 기록 없음</span>
+                        </div>
                     </div>
-                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line3')">저장</button>
+                    <button onclick="saveLineSchedule('Line3')" 
+                            class="w-full px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                        저장
+                    </button>
                 </div>
 
                 <!-- Line 4 -->
-                <div class="schedule-line">
-                    <div class="schedule-line-header">
-                        <h3>Line #4</h3>
-                        <select id="line4-status" class="status-select">
-                            <option value="pending">대기중</option>
-                            <option value="in_progress">진행중</option>
-                            <option value="completed">완료</option>
+                <div class="p-6 border-2 border-gray-200 rounded-xl hover:border-brand-purple/50 hover:shadow-lg transition-all bg-gradient-to-br from-white to-gray-50">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800">Line #4</h3>
+                        <select id="line4-status" 
+                                class="px-4 py-2 border-2 border-gray-300 rounded-lg font-medium text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all cursor-pointer bg-white">
+                            <option value="pending" data-ko="대기중" data-en="Pending">대기중</option>
+                            <option value="in_progress" data-ko="진행중" data-en="In Progress">진행중</option>
+                            <option value="completed" data-ko="완료" data-en="Completed">완료</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>생산 일정:</label>
-                        <input type="text" id="line4-schedule" placeholder="예: B-Lot 생산 중">
+                    <div class="mb-4">
+                        <label class="schedule-label block text-sm font-semibold text-gray-700 mb-2">생산 일정:</label>
+                        <input type="text" id="line4-schedule" placeholder="예: B-Lot 생산 중" 
+                               class="schedule-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all">
                     </div>
-                    <div class="form-group">
-                        <label>특이사항/메모:</label>
-                        <textarea id="line4-notes" rows="2" placeholder="특이사항 입력..."></textarea>
+                    <div class="mb-4">
+                        <label class="notes-label block text-sm font-semibold text-gray-700 mb-2">특이사항/메모:</label>
+                        <textarea id="line4-notes" rows="2" placeholder="특이사항 입력..." 
+                                  class="notes-input w-full px-4 py-3 border-2 border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-brand-purple focus:border-brand-purple transition-all min-h-[60px]"></textarea>
                     </div>
-                    <div class="last-update">
-                        <span id="line4-last-update">수정 기록 없음</span>
+                    <div class="mb-4 p-4 bg-gray-50 border-l-4 border-brand-purple rounded-lg">
+                        <label class="log-label block text-sm font-semibold text-gray-700 mb-2">📝 수정 기록</label>
+                        <div class="p-3 bg-white rounded-md">
+                            <span id="line4-last-update" class="text-sm text-gray-600">수정 기록 없음</span>
+                        </div>
                     </div>
-                    <button class="save-schedule-btn" onclick="saveLineSchedule('Line4')">저장</button>
+                    <button onclick="saveLineSchedule('Line4')" 
+                            class="w-full px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                        저장
+                    </button>
                 </div>
             </div>
         </div>
