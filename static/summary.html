@@ -4,24 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checklist Summary Calendar</title>
-    <link rel="stylesheet" href="styles.css"> 
+    <!-- Tailwind CSS (index.html과 동일한 빌드 파일 사용) -->
+    <link rel="stylesheet" href="output.css">
+    <link rel="icon" href="./symbol_ci.svg" type="image/svg+xml">
 </head>
-<body>
-    <div class="container"></div>
-        <header>
-            <h1>Checklist Summary</h1>
-            <div class="submit-btn"> 
-                <button id="return-btn" class="return-btn">Back to Checklist</button> 
-            </div>
+<body class="bg-gradient-to-br from-brand-purple to-brand-purple-dark min-h-screen p-5 text-gray-800">
+    <div class="max-w-screen-xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <header class="bg-gradient-to-r from-brand-purple to-brand-purple-dark text-white p-8 text-center">
+            <h1 class="text-4xl font-bold mb-5">Checklist Summary</h1>
+            <button id="return-btn" 
+                    class="px-6 py-3 rounded-lg border-2 border-white/30 bg-white/20 text-white font-semibold backdrop-blur-md hover:bg-white/30 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                Back to Checklist
+            </button>
         </header>
 
-        <div id="calendar-controls">
-            <button id="prev-month"> &lt; </button>
-            <span id="current-month-year"></span>
-            <button id="next-month"> &gt; </button>
+        <!-- Month Navigation -->
+        <div id="calendar-controls" class="flex items-center justify-center gap-6 p-6">
+            <button id="prev-month" 
+                    class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-bold hover:bg-brand-purple hover:text-white transition-colors cursor-pointer">
+                &lt;
+            </button>
+            <span id="current-month-year" class="text-2xl font-bold text-gray-800 min-w-[200px] text-center"></span>
+            <button id="next-month" 
+                    class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 font-bold hover:bg-brand-purple hover:text-white transition-colors cursor-pointer">
+                &gt;
+            </button>
         </div>
 
-        <div id="calendar-container">
+        <!-- Calendar -->
+        <div id="calendar-container" class="p-6 pt-0">
             <div id="calendar-header"></div>
             <div id="calendar-grid"></div>
         </div>

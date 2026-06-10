@@ -685,10 +685,11 @@ function translateFilterValue(value) {
 
 function fillSelect(selectElement, values, defaultLabel, formatter) {
     const currentValue = selectElement.value || 'all';
-    selectElement.innerHTML = `<option value="all">${defaultLabel}</option>`;
+    // text-gray-800: 드롭다운 옵션이 흰색 글자로 안 보이는 문제 방지
+    selectElement.innerHTML = `<option value="all" class="text-gray-800">${defaultLabel}</option>`;
     values.forEach(value => {
         const label = formatter ? formatter(value) : value;
-        selectElement.innerHTML += `<option value="${value}">${escapeHtml(label)}</option>`;
+        selectElement.innerHTML += `<option value="${value}" class="text-gray-800">${escapeHtml(label)}</option>`;
     });
 
     if ([...selectElement.options].some(opt => opt.value === currentValue)) {
@@ -1116,7 +1117,7 @@ async function loadManuals() {
         renderManualList(setupList, items.filter(m => m.category === 'setup'));
     } catch (error) {
         console.error('Error loading manuals:', error);
-        const errorText = currentLang === 'kr' ? '매뉴얼을 불러오는데 실패했습니다.' : 'Failed to load manuals.';
+        const errorText = currentLang === 'kr' ? '메뉴얼을 불러오는데 실패했습니다.' : 'Failed to load manuals.';
         troubleshootingList.innerHTML = `<p class="text-sm text-red-500 py-2">${errorText}</p>`;
         setupList.innerHTML = '';
     }
@@ -1166,22 +1167,22 @@ function updateManualsModalLanguage() {
     
     const manualsBtn = document.getElementById('manuals-btn');
     if (manualsBtn) {
-        manualsBtn.textContent = lang === 'kr' ? '📚 매뉴얼' : '📚 Manuals';
+        manualsBtn.textContent = lang === 'kr' ? '메뉴얼' : 'Manuals';
     }
     
     const modalTitle = document.getElementById('manuals-modal-title');
     if (modalTitle) {
-        modalTitle.textContent = lang === 'kr' ? '📚 매뉴얼' : '📚 Manuals';
+        modalTitle.textContent = lang === 'kr' ? '메뉴얼' : 'Manuals';
     }
     
     const troubleshootingTitle = document.getElementById('manuals-troubleshooting-title');
     if (troubleshootingTitle) {
-        troubleshootingTitle.textContent = lang === 'kr' ? '🔧 조치 매뉴얼' : '🔧 Troubleshooting Manuals';
+        troubleshootingTitle.textContent = lang === 'kr' ? '🔧 조치 메뉴얼' : '🔧 Troubleshooting Manuals';
     }
     
     const setupTitle = document.getElementById('manuals-setup-title');
     if (setupTitle) {
-        setupTitle.textContent = lang === 'kr' ? '⚙️ 셋업 매뉴얼' : '⚙️ Setup Manuals';
+        setupTitle.textContent = lang === 'kr' ? '셋업 메뉴얼' : 'Setup Manuals';
     }
 }
 

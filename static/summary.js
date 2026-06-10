@@ -80,10 +80,36 @@ async function fetchSummaryData(date) {
 
 // --- Rendering Logic ---
 
+// ===== Tailwind 클래스 정의 (달력 스타일) =====
+const CAL_CLASSES = {
+    // 요일 헤더 (Sun ~ Sat)
+    header: 'grid grid-cols-7 gap-2 mb-2',
+    headerDay: 'text-center text-sm font-bold text-gray-500 py-2',
+    // 달력 그리드
+    grid: 'grid grid-cols-7 gap-2',
+    // 날짜 칸 (기본)
+    day: 'block min-h-[110px] p-2 border-2 border-gray-200 rounded-lg bg-white text-gray-800 no-underline transition-all',
+    // 클릭 가능한 칸 (링크)
+    clickable: 'hover:border-brand-purple hover:shadow-md cursor-pointer',
+    // 빈 칸 (이전 달 패딩)
+    empty: 'min-h-[110px] border-2 border-transparent',
+    // 상태별 배경
+    submitted: 'bg-green-50 border-green-400',       // 전부 완료
+    incomplete: 'bg-red-50 border-red-300',          // 미완료
+    // 날짜 숫자
+    dayNumber: 'text-sm font-bold mb-1',
+    // 요약 내용
+    details: 'text-[11px] leading-tight space-y-0.5',
+    statusChecked: 'font-semibold text-green-600',
+    statusOngoing: 'font-semibold text-amber-600',
+    statusIncomplete: 'font-semibold text-red-600',
+    summaryText: 'text-gray-500',
+};
+
 function renderHeader() {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    calendarHeader.className = 'calendar-header';
-    calendarHeader.innerHTML = days.map(day => `<div>${day}</div>`).join('');
+    calendarHeader.className = CAL_CLASSES.header;
+    calendarHeader.innerHTML = days.map(day => `<div class="${CAL_CLASSES.headerDay}">${day}</div>`).join('');
 }
 
 /**
@@ -93,7 +119,7 @@ function renderHeader() {
  */
 function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
     calendarGrid.innerHTML = '';
-    calendarGrid.className = 'calendar-grid';
+    calendarGrid.className = CAL_CLASSES.grid;
 
     const year = currentViewDate.getFullYear();
     const month = currentViewDate.getMonth();
@@ -110,7 +136,7 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
 
     // 3. Add padding (empty) cells for days before the 1st
     for (let i = 0; i < startingDayOfWeek; i++) {
-        calendarGrid.innerHTML += '<div class="calendar-day empty"></div>';
+        calendarGrid.innerHTML += `<div class="${CAL_CLASSES.empty}"></div>`;
     }
 
     const actualToday = getTodayDate(); // Get today for comparison
@@ -121,14 +147,17 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
         const dateStr = formatDate(date);
         const dayData = summaryData[dateStr];
         
-        let content = `<div class="day-number">${day}</div>`;
-        let dayClass = 'calendar-day';
+        let content = `<div class="${CAL_CLASSES.dayNumber}">${day}</div>`;
+        let dayClass = CAL_CLASSES.day;
 
         // Logic to determine if the day should be a link
         const isClickable = !!dayData || dateStr >= actualToday;
         
         let elementTag = isClickable ? 'a' : 'div';
         const linkAttribute = isClickable ? `href="index.html?date=${dateStr}"` : '';
+        if (isClickable) {
+            dayClass += ` ${CAL_CLASSES.clickable}`;
+        }
 
         const periodMap = {
             "1": "Daily",
@@ -139,50 +168,45 @@ function renderCalendar(summaryData, totalItemsCount) { // UPDATED SIGNATURE
             "120": "Every three Month"
 
         };
-        const summaryLines = [];
-        for (const periodKey in dayData.period_checks) {
-            const checkedCount = dayData.period_checks[periodKey] || 0;
-            const dueCount = dayData.period_due_counts[periodKey] || 0; 
-            const periodName = periodMap[periodKey] || `Period ${periodKey}`;
-        
-            // Create the summary string and wrap it in a <p> tag
-            const summaryString = `<p>${periodName}: ${checkedCount}/${dueCount}</p>`;
-            
-            summaryLines.push(summaryString);
-        }
-        const periodSummaries = summaryLines.join('\n');
 
         if (dayData) {
-            dayClass += ' has-data';
+            const summaryLines = [];
+            for (const periodKey in dayData.period_checks) {
+                const checkedCount = dayData.period_checks[periodKey] || 0;
+                const dueCount = dayData.period_due_counts[periodKey] || 0; 
+                const periodName = periodMap[periodKey] || `Period ${periodKey}`;
             
-            // --- NEW STATUS LOGIC START ---
+                summaryLines.push(`<p class="${CAL_CLASSES.summaryText}">${periodName}: ${checkedCount}/${dueCount}</p>`);
+            }
+            const periodSummaries = summaryLines.join('\n');
+            
+            // --- STATUS LOGIC ---
             let statusText;
             let statusClass;
             const checkedCount = dayData.total_checked;
             const dueCount = dayData.total_due;
 
-            if (checkedCount === 0 && dayData.submitted === false) { // Assuming document exists but 0 checks
+            if (checkedCount === 0 && dayData.submitted === false) {
                 // Case 1: Nothing checked (Incomplete)
                 statusText = '❌ Incomplete';
-                statusClass = 'incomplete';
-                dayClass += ' is-incomplete'; // <-- NEW CLASS HERE
+                statusClass = CAL_CLASSES.statusIncomplete;
+                dayClass += ` ${CAL_CLASSES.incomplete}`;
             } else if (checkedCount === dueCount) {
                 // Case 2: All items checked (Checked)
                 statusText = '✅ Checked';
-                statusClass = 'checked';
-                dayClass += ' submitted'; 
+                statusClass = CAL_CLASSES.statusChecked;
+                dayClass += ` ${CAL_CLASSES.submitted}`;
             } else {
                 // Case 3: Some items checked, but not all (Ongoing)
                 statusText = '⚠️ Ongoing';
-                statusClass = 'ongoing';
+                statusClass = CAL_CLASSES.statusOngoing;
             }
             
-            // Note: The dayClass += ' submitted' from the old logic is now integrated into Case 2.
             content += `
-                <div class="summary-details">
-                    <p class="status ${statusClass}">${statusText}</p>
-                    <ul class="user-list"> Total: ${checkedCount}/ ${dueCount}</ul>
-                    <ul class="user-list"> ${periodSummaries}</ul>
+                <div class="${CAL_CLASSES.details}">
+                    <p class="${statusClass}">${statusText}</p>
+                    <p class="${CAL_CLASSES.summaryText}">Total: ${checkedCount}/${dueCount}</p>
+                    ${periodSummaries}
                 </div>
             `;
         }
