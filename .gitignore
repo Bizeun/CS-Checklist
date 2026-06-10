@@ -17,8 +17,9 @@ CS_Checklist.xlsx
 
 # Node modules & Tailwind
 node_modules/
-static/output.css
 package-lock.json
+# 주의: static/output.css는 Vercel 배포에 필요하므로 Git에 포함해야 함!
+# (Python 프로젝트라서 Vercel이 Tailwind 빌드를 실행하지 않음)
 
 # Manual files (uploaded to Firebase, not stored in Git)
 manuals/
