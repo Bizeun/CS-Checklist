@@ -113,6 +113,7 @@ if (langBtn) {
         populateFilters(); // Update filter labels
         renderChecklist();
         updateScheduleModalLanguage(); // Update schedule modal language
+        updateManualsModalLanguage(); // Update manuals modal language
     });
 }
 
@@ -1075,8 +1076,150 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// ==================== Manuals (매뉴얼) ====================
+
+// 파일 형식별 아이콘과 "바로 보기 가능 여부"
+const FILE_TYPE_INFO = {
+    pdf:  { icon: '📄', viewable: true },
+    png:  { icon: '🖼️', viewable: true },
+    jpg:  { icon: '🖼️', viewable: true },
+    jpeg: { icon: '🖼️', viewable: true },
+    gif:  { icon: '🖼️', viewable: true },
+    doc:  { icon: '📝', viewable: false },
+    docx: { icon: '📝', viewable: false },
+    xls:  { icon: '📊', viewable: false },
+    xlsx: { icon: '📊', viewable: false },
+    ppt:  { icon: '📋', viewable: false },
+    pptx: { icon: '📋', viewable: false },
+};
+
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function loadManuals() {
+    const troubleshootingList = document.getElementById('manuals-troubleshooting-list');
+    const setupList = document.getElementById('manuals-setup-list');
+    const loadingText = currentLang === 'kr' ? '불러오는 중...' : 'Loading...';
+    
+    troubleshootingList.innerHTML = `<p class="text-sm text-gray-400 py-2">${loadingText}</p>`;
+    setupList.innerHTML = `<p class="text-sm text-gray-400 py-2">${loadingText}</p>`;
+    
+    try {
+        const response = await fetch(`${API_BASE}/manuals`);
+        const data = await response.json();
+        const items = data.items || [];
+        
+        renderManualList(troubleshootingList, items.filter(m => m.category === 'troubleshooting'));
+        renderManualList(setupList, items.filter(m => m.category === 'setup'));
+    } catch (error) {
+        console.error('Error loading manuals:', error);
+        const errorText = currentLang === 'kr' ? '매뉴얼을 불러오는데 실패했습니다.' : 'Failed to load manuals.';
+        troubleshootingList.innerHTML = `<p class="text-sm text-red-500 py-2">${errorText}</p>`;
+        setupList.innerHTML = '';
+    }
+}
+
+function renderManualList(container, manuals) {
+    if (manuals.length === 0) {
+        const emptyText = currentLang === 'kr' ? '등록된 매뉴얼이 없습니다.' : 'No manuals available.';
+        container.innerHTML = `<p class="text-sm text-gray-400 py-2">${emptyText}</p>`;
+        return;
+    }
+    
+    const viewText = currentLang === 'kr' ? '보기' : 'View';
+    const downloadText = currentLang === 'kr' ? '다운로드' : 'Download';
+    
+    container.innerHTML = manuals.map(manual => {
+        const typeInfo = FILE_TYPE_INFO[manual.file_type] || { icon: '📁', viewable: false };
+        const sizeText = formatFileSize(manual.size_bytes);
+        
+        // PDF/이미지는 브라우저에서 바로 보기, 나머지는 다운로드만
+        const actionBtn = typeInfo.viewable
+            ? `<a href="${escapeHtml(manual.url)}" target="_blank" rel="noopener"
+                  class="px-4 py-1.5 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors whitespace-nowrap">${viewText}</a>`
+            : '';
+        
+        return `
+            <div class="flex items-center justify-between gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:border-amber-400 hover:bg-amber-50/50 transition-all">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="text-2xl flex-shrink-0">${typeInfo.icon}</span>
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">${escapeHtml(manual.filename)}</p>
+                        <p class="text-xs text-gray-400">${manual.file_type.toUpperCase()}${sizeText ? ' · ' + sizeText : ''}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 flex-shrink-0">
+                    ${actionBtn}
+                    <a href="${escapeHtml(manual.url)}" download
+                       class="px-4 py-1.5 text-sm font-medium bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap">${downloadText}</a>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateManualsModalLanguage() {
+    const lang = currentLang;
+    
+    const manualsBtn = document.getElementById('manuals-btn');
+    if (manualsBtn) {
+        manualsBtn.textContent = lang === 'kr' ? '📚 매뉴얼' : '📚 Manuals';
+    }
+    
+    const modalTitle = document.getElementById('manuals-modal-title');
+    if (modalTitle) {
+        modalTitle.textContent = lang === 'kr' ? '📚 매뉴얼' : '📚 Manuals';
+    }
+    
+    const troubleshootingTitle = document.getElementById('manuals-troubleshooting-title');
+    if (troubleshootingTitle) {
+        troubleshootingTitle.textContent = lang === 'kr' ? '🔧 조치 매뉴얼' : '🔧 Troubleshooting Manuals';
+    }
+    
+    const setupTitle = document.getElementById('manuals-setup-title');
+    if (setupTitle) {
+        setupTitle.textContent = lang === 'kr' ? '⚙️ 셋업 매뉴얼' : '⚙️ Setup Manuals';
+    }
+}
+
+// Manuals modal event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const manualsBtn = document.getElementById('manuals-btn');
+    const manualsModal = document.getElementById('manuals-modal');
+    const closeManuals = document.querySelector('.close-manuals');
+    
+    if (manualsBtn) {
+        manualsBtn.addEventListener('click', () => {
+            manualsModal.classList.remove('hidden');
+            manualsModal.classList.add('flex');
+            updateManualsModalLanguage();
+            loadManuals();
+        });
+    }
+    
+    if (closeManuals) {
+        closeManuals.addEventListener('click', () => {
+            manualsModal.classList.add('hidden');
+            manualsModal.classList.remove('flex');
+        });
+    }
+    
+    window.addEventListener('click', (event) => {
+        if (event.target === manualsModal) {
+            manualsModal.classList.add('hidden');
+            manualsModal.classList.remove('flex');
+        }
+    });
+});
+
 // Load initial checklist
 loadChecklist();
 
 // Initialize schedule modal language on page load
 updateScheduleModalLanguage();
+
+// Initialize manuals button language on page load
+updateManualsModalLanguage();

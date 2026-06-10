@@ -19,3 +19,6 @@ CS_Checklist.xlsx
 node_modules/
 static/output.css
 package-lock.json
+
+# Manual files (uploaded to Firebase, not stored in Git)
+manuals/

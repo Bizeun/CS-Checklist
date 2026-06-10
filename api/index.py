@@ -620,6 +620,25 @@ async def save_schedule(payload: dict):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@app.get('/api/manuals')
+async def get_manuals():
+    """Return the list of uploaded manuals (metadata stored in Firestore)."""
+    try:
+        ensure_firebase()
+
+        doc_ref = db.collection('config').document('manuals')
+        doc = doc_ref.get()
+
+        if doc.exists:
+            data = doc.to_dict()
+            items = data.get('items', [])
+            return JSONResponse(make_json_serializable({"items": items}))
+        else:
+            return JSONResponse({"items": []})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # -------- Static asset helpers for local dev -------- #
 @app.get('/')
 async def index():

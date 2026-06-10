@@ -44,7 +44,8 @@ def create_nnd_checklist():
             ("조명 상태 및 점등 확인", "Check Lighting Status & Illumination"),
             ("카메라 착상 및 고정 상태 확인", "Check Camera Mounting & Fixation"),
             ("탭 센서 및 탭 가이드 이물 확인 및 클리닝", "Check/Clean Tab Sensor & Tab Guide (Dust/Tiny Particles)"),
-            ("롤러(Roller) 클리닝", "Clean Roller")
+            ("롤러(Roller) 클리닝", "Clean Roller"),
+            ("파단 이후 클리닝", "Cleaning After Break")
         ]
         add_items(proc, "공통", "H/W & 클리닝", hw_common_items)
 
